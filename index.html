@@ -1,10 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Мой бесплатный сайт</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моя визитка | gooodgooose-RU</title>
+    
+    <!-- ТУТ ЖИВУТ СТИЛИ (CSS) -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121214;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background-color: #1a1a1e;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 350px;
+            width: 100%;
+            border: 1px solid #2a2a30;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #00ff88;
+        }
+        p {
+            color: #a0a0a5;
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+        .btn {
+            display: block;
+            background-color: #2a2a30;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .btn:hover {
+            background-color: #00ff88;
+            color: #121214;
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 <body>
-    <h1>Ура! Сайт работает бесплатно!</h1>
-    <p>Привет от Белого Гуся.</p>
+
+    <!-- ТУТ ЖИВЕТ СТРУКТУРА (HTML) -->
+    <div class="card">
+        <h1>gooodgooose-RU</h1>
+        <p>Добро пожаловать на мой личный сайт!</p>
+        
+        <!-- Ссылки на ваши будущие проекты или соцсети -->
+        <a href="https://github.com" target="_blank" class="btn">Мой GitHub профиль</a>
+        <button class="btn" id="magicBtn">Нажми для магии ✨</button>
+    </div>
+
+    <!-- ТУТ ЖИВУТ СКРИПТЫ (JavaScript) -->
+    <script>
+        const button = document.getElementById('magicBtn');
+        button.addEventListener('click', () => {
+            alert('Магия сработала! JavaScript полностью исправен 🚀');
+        });
+    </script>
+
 </body>
 </html>
+
