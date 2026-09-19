@@ -55,8 +55,8 @@
 </head>
 <body>
 
-<!-- YouTube player container (hidden) -->
-<div id="youtube-player" style="display:none;"></div>
+<!-- Hidden YouTube player container -->
+<div id="player" style="display:none;"></div>
 
 <!-- Screen 1: Welcome -->
 <div class="screen active" id="screen-welcome">
@@ -148,11 +148,16 @@ function showScreen(id) {
 }
 
 function startQuiz(cat) {
+  // Запускаем музыку строго по клику пользователя
+  if (player && typeof player.playVideo === 'function') {
+    player.unMute();   // снимаем беззвучный режим на всякий случай
+    player.playVideo(); // запускаем воспроизведение
+  }
+
   currentCat = cat;
   currentQ = 0;
   score = 0;
   showScreen('screen-quiz');
-  if (player && player.playVideo) { player.playVideo(); }
   loadQuestion();
 }
 
@@ -230,7 +235,11 @@ function answer(idx) {
 
 function finishQuiz() {
   showScreen('screen-finish');
-  if (player && player.stopVideo) { player.stopVideo(); }
+
+  // Останавливаем музыку на финальном экране
+  if (player && typeof player.stopVideo === 'function') {
+    player.stopVideo();
+  }
 
   var pool = questions[currentCat];
   var total = pool.length;
@@ -262,14 +271,15 @@ window.onload = function() {
 <script>
 var player;
 function onYouTubeIframeAPIReady() {
-  player = new YT.Player('youtube-player', {
+  player = new YT.Player('player', {
     height: '0',
     width: '0',
     videoId: 'b_fLp7hI4C8',
     playerVars: {
       'autoplay': 0,
       'loop': 1,
-      'playlist': 'b_fLp7hI4C8'
+      'playlist': 'b_fLp7hI4C8',
+      'controls': 0
     }
   });
 }
