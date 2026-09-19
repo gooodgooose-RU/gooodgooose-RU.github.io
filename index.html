@@ -1,243 +1,559 @@
+html
+Копировать
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GooseQuiz — Аналог Kahoot!</title>
+    <title>Викторина — аналог Kahoot</title>
     <style>
-        :root {
-            --bg-color: #121214;
-            --card-bg: #1a1a1e;
-            --text-color: #ffffff;
-            --accent-color: #00ff88;
-            --blue-color: #00d2ff;
-        }
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #121212;
+            color: #f0f0f0;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
+            background-image: radial-gradient(circle at 20% 20%, #1e1e3a 0%, #0a0a1a 100%);
         }
-        .quiz-container {
-            background-color: var(--card-bg);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+
+        #app {
             width: 100%;
-            max-width: 600px;
-            border: 1px solid #2a2a30;
+            max-width: 650px;
+            padding: 20px;
+        }
+
+        /* экраны */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            background: rgba(20, 20, 40, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 30px 25px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
             text-align: center;
         }
-        h1 { color: var(--accent-color); margin-top: 0; }
-        
-        /* Кнопки выбора возраста */
-        .age-btn {
-            display: block;
-            width: 100%;
-            color: white;
-            border: none;
-            padding: 15px;
-            margin: 12px 0;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
+
+        .screen.active {
+            display: flex;
         }
-        .age-btn:hover { transform: translateY(-2px); }
-        .btn-kids { background-color: #3498db; }
-        .btn-teens { background-color: #9b51e0; }
-        .btn-adults { background-color: #e67e22; }
-        
-        /* Сетка ответов Kahoot */
-        .answers-grid {
+
+        h1, h2, h3 {
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f9a825, #ff5959);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-description {
+            color: #b0b0c0;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            max-width: 400px;
+        }
+
+        .btn-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
-            margin-top: 20px;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 10px;
         }
-        .answer-btn {
-            padding: 25px;
-            font-size: 18px;
+
+        .btn {
             border: none;
-            border-radius: 12px;
-            color: white;
+            border-radius: 18px;
+            padding: 18px 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: bold;
-            transition: opacity 0.2s;
+            transition: all 0.18s ease;
+            background: #2a2a40;
+            color: #1e1e2e;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+            letter-spacing: 0.3px;
+            outline: none;
         }
-        .answer-btn:hover { opacity: 0.9; }
-        .ans-0 { background-color: #e21b3c; }
-        .ans-1 { background-color: #1368ce; }
-        .ans-2 { background-color: #d89e00; }
-        .ans-3 { background-color: #26890c; }
-        
-        .quiz-header {
+
+        .btn:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.3);
+            background: #383855;
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+            filter: brightness(0.9);
+            transition: all 0.05s;
+        }
+
+        .btn.kids {
+            background: #f9a825;
+        }
+
+        .btn.teens {
+            background: #6a9fb5;
+        }
+
+        .btn.pros {
+            background: #88d8b0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.4);
+        }
+
+        /* экран вопроса */
+        .question-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-        .timer { color: var(--blue-color); font-size: 18px; }
-        .question-text { font-size: 22px; margin-bottom: 25px; min-height: 60px; }
-        .score-num { font-size: 48px; color: var(--accent-color); font-weight: bold; margin: 20px 0; }
-        .grade { font-size: 24px; font-weight: bold; color: var(--blue-color); }
-        
-        /* Обычная перезагрузка */
-        .reset-btn {
-            background-color: #2a2a30;
-            color: white;
-            border: 1px solid #444;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 20px;
+            align-items: center;
             width: 100%;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #c5c5d5;
+        }
+
+        .question-num {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+
+        .timer-outer {
+            width: 60px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-left: 12px;
+        }
+
+        .timer-bar {
+            height: 100%;
+            width: 100%;
+            background: #f9a825;
+            border-radius: 10px;
+            transition: width 0.05s linear;
+        }
+
+        .question-text {
+            font-size: 1.7rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin: 15px 0 25px;
+            color: #ffffff;
+            word-break: break-word;
+        }
+
+        .answer-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            width: 100%;
+            max-width: 420px;
+            margin-top: 5px;
+        }
+
+        .answer-btn {
+            background: #2e2e45;
+            color: #ffffff;
+            border-radius: 16px;
+            padding: 16px 10px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.2px;
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.4);
+            background: #3d3d5c;
+        }
+
+        .answer-btn:active {
+            transform: translateY(1px);
+            filter: brightness(0.8);
+        }
+
+        .answer-btn.correct {
+            background: #88d8b0;
+            color: #0b2b2b;
+            box-shadow: 0 0 20px #88d8b0aa;
+        }
+
+        .answer-btn.wrong {
+            background: #ff7c7c;
+            color: #2d0b0b;
+            box-shadow: 0 0 20px #ff7c7c88;
+        }
+
+        /* экран результатов */
+        .result-circle {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: conic-gradient(#88d8b0 0deg, #88d8b0 0deg, #2a2a40 0deg);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #1e1e2e;
+            box-shadow: 0 0 35px #88d8b066;
+        }
+
+        .score-comment {
+            font-size: 1.3rem;
+            margin: 10px 0 5px;
+            font-weight: 500;
+            color: #ddd;
+        }
+
+        .play-again {
+            margin-top: 25px;
+            background: #f9a825;
+            color: #0b1f2b;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            padding: 16px 35px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 25px #f9a82566;
+        }
+
+        .play-again:hover {
+            filter: brightness(1.2);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 450px) {
+            .btn-grid {
+                grid-template-columns: 1fr;
+            }
+            .answer-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-
-<div class="quiz-container">
-    
-    <!-- ЭКРАН 1: ПРИВЕТСТВИЕ -->
-    <div id="screen-welcome" style="display: block;">
-        <h1>GooseQuiz 🚀</h1>
-        <p>Выберите категорию теста, чтобы начать:</p>
-        <button class="age-btn btn-kids" id="start-kids">Дети (7-10 лет)</button>
-        <button class="age-btn btn-teens" id="start-teens">Подростки (11-15 лет)</button>
-        <button class="age-btn btn-adults" id="start-adults">Профи (16+ лет)</button>
-    </div>
-
-    <!-- ЭКРАН 2: ИГРА -->
-    <div id="screen-game" style="display: none;">
-        <div class="quiz-header">
-            <div>Вопрос: <span id="current-q">1</span>/10</div>
-            <div class="timer">⏱️ <span id="time-left">20</span>с</div>
+    <div id="app">
+        <!-- Экран 1: Приветствие -->
+        <div id="screen-welcome" class="screen active">
+            <h1>🧠 Викторина</h1>
+            <p class="welcome-description">Выбери возрастную категорию — вопросы подстроятся под тебя.</p>
+            <div class="btn-grid">
+                <button class="btn kids" onclick="startQuiz('kids')">Дети (7–10 лет)</button>
+                <button class="btn teens" onclick="startQuiz('teens')">Подростки (11–15 лет)</button>
+                <button class="btn pros" onclick="startQuiz('pros')">Профи (16+ лет)</button>
+            </div>
         </div>
-        <div class="question-text" id="question-field">Загрузка...</div>
-        <div class="answers-grid">
-            <button class="answer-btn ans-0" id="btn-0">Вариант 1</button>
-            <button class="answer-btn ans-1" id="btn-1">Вариант 2</button>
-            <button class="answer-btn ans-2" id="btn-2">Вариант 3</button>
-            <button class="answer-btn ans-3" id="btn-3">Вариант 4</button>
+
+        <!-- Экран 2: Игра -->
+        <div id="screen-quiz" class="screen">
+            <div class="question-header">
+                <span>Вопрос: <span id="question-num">1/10</span></span>
+                <div class="timer-outer">
+                    <div id="timer-bar" class="timer-bar"></div>
+                </div>
+            </div>
+            <div id="question-text" class="question-text"></div>
+            <div id="answer-container" class="answer-grid"></div>
+        </div>
+
+        <!-- Экран 3: Финиш -->
+        <div id="screen-results" class="screen">
+            <div class="result-circle" id="result-circle">0</div>
+            <h2 id="result-score" style="font-size:2rem; margin:5px 0;">0 / 10</h2>
+            <p class="score-comment" id="result-comment"></p>
+            <button class="play-again" onclick="resetQuiz()">🔄 Играть снова</button>
         </div>
     </div>
 
-    <!-- ЭКРАН 3: ФИНИШ -->
-    <div id="screen-results" style="display: none;">
-        <h1>Итоги викторины 🎉</h1>
-        <div class="score-num"><span id="final-score">0</span> / 10</div>
-        <div class="grade" id="final-grade">Оценка</div>
-        <p id="grade-comment">Комментарий</p>
-        <button class="reset-btn" id="btn-restart">Играть снова 🔄</button>
-    </div>
+    <script>
+        (function() {
+            // ---------- База вопросов ----------
+            const questionsDB = {
+                kids: [
+                    { q: "Какое животное называют символом мудрости?", opts: ["Сова", "Лиса", "Медведь", "Заяц"], correct: 0 },
+                    { q: "Сколько ног у паука?", opts: ["6", "8", "10", "12"], correct: 1 },
+                    { q: "Как называется столица России?", opts: ["Санкт-Петербург", "Казань", "Москва", "Новгород"], correct: 2 },
+                    { q: "Какого цвета чистое небо днём?", opts: ["Синее", "Белое", "Серое", "Жёлтое"], correct: 0 },
+                    { q: "Кто написал сказку «Колобок»?", opts: ["А.С. Пушкин", "Народная", "Л.Н. Толстой", "К.И. Чуковский"], correct: 1 },
+                    { q: "Сколько месяцев в году?", opts: ["10", "11", "12", "13"], correct: 2 },
+                    { q: "Как называется естественный спутник Земли?", opts: ["Марс", "Солнце", "Луна", "Венера"], correct: 2 },
+                    { q: "Чем дышат рыбы?", opts: ["Лёгкими", "Жабрами", "Кожей", "Трахеями"], correct: 1 },
+                    { q: "Какое время года наступает после зимы?", opts: ["Лето", "Осень", "Весна", "Снова зима"], correct: 2 },
+                    { q: "Сколько будет 5 + 7?", opts: ["11", "12", "13", "14"], correct: 1 }
+                ],
+                teens: [
+                    { q: "Какой химический элемент обозначается символом O?", opts: ["Золото", "Кислород", "Олово", "Осмий"], correct: 1 },
+                    { q: "В каком году началась Вторая мировая война?", opts: ["1937", "1939", "1941", "1945"], correct: 1 },
+                    { q: "Кто первым достиг берегов Америки?", opts: ["Васко да Гама", "Христофор Колумб", "Фернан Магеллан", "Джеймс Кук"], correct: 1 },
+                    { q: "Какая река — самая длинная в мире?", opts: ["Амазонка", "Нил", "Янцзы", "Миссисипи"], correct: 1 },
+                    { q: "Сколько континентов на Земле?", opts: ["5", "6", "7", "8"], correct: 2 },
+                    { q: "Какой газ составляет около 78% атмосферы?", opts: ["Кислород", "Углекислый газ", "Азот", "Аргон"], correct: 2 },
+                    { q: "Кто автор романа «Преступление и наказание»?", opts: ["Л.Н. Толстой", "А.П. Чехов", "Ф.М. Достоевский", "И.С. Тургенев"], correct: 2 },
+                    { q: "Сколько планет в Солнечной системе?", opts: ["7", "8", "9", "10"], correct: 1 },
+                    { q: "Какая кость в теле человека самая длинная?", opts: ["Большая берцовая", "Бедренная", "Плечевая", "Локтевая"], correct: 1 },
+                    { q: "В каком году распался СССР?", opts: ["1988", "1990", "1991", "1993"], correct: 2 }
+                ],
+                pros: [
+                    { q: "Какая страна имеет наибольшее количество часовых поясов?", opts: ["Россия", "США", "Франция", "Китай"], correct: 2 },
+                    { q: "Кто написал «Сто лет одиночества»?", opts: ["Хорхе Луис Борхес", "Габриэль Гарсиа Маркес", "Марио Варгас Льоса", "Пабло Неруда"], correct: 1 },
+                    { q: "Какой химический элемент имеет атомный номер 79?", opts: ["Платина", "Серебро", "Ртуть", "Золото"], correct: 3 },
+                    { q: "В каком году была основана ООН?", opts: ["1943", "1945", "1947", "1950"], correct: 1 },
+                    { q: "Какая гора — высочайшая в Солнечной системе?", opts: ["Эверест", "Олимп (Марс)", "Маат-Монс (Венера)", "Аскрийская гора"], correct: 1 },
+                    { q: "Кто был первым человеком в космосе?", opts: ["Нил Армстронг", "Юрий Гагарин", "Алексей Леонов", "Валентина Терешкова"], correct: 1 },
+                    { q: "Сколько клавиш у стандартного фортепиано?", opts: ["72", "80", "84", "88"], correct: 3 },
+                    { q: "Какое море не имеет берегов?", opts: "Саргассово", opts: ["Саргассово", "Мёртвое", "Карибское", "Баренцево"], correct: 0 },
+                    { q: "Кто изобрёл печатный станок в Европе?", opts: ["Бенджамин Франклин", "Иоганн Гутенберг", "Уильям Кэкстон", "Альд Мануций"], correct: 1 },
+                    { q: "Какой химический символ у ртути?", opts: ["R", "Hg", "Pb", "Ag"], correct: 1 }
+                ]
+            };
 
-</div>
+            // ---------- Состояние игры ----------
+            let currentCategory = null;
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let timerInterval = null;
+            let timeLeft = 20; // секунд
+            let answered = false;
+            let started = false; // флаг для предотвращения двойного старта
 
-<script>
-// База данных вопросов
-const quizData = {
-    kids: [
-        { q: "Сколько планет в Солнечной системе?", a: ["7", "8", "9", "10"], c: 1 },
-        { q: "Какая птица не умеет летать?", a: ["Воробей", "Пингвин", "Орел", "Сова"], c: 1 },
-        { q: "Что длится дольше всего?", a: ["Час", "Минута", "Год", "Месяц"], c: 2 },
-        { q: "Спутник Земли — это...", a: ["Марс", "Солнце", "Луна", "Сатурн"], c: 2 },
-        { q: "Какой гриб самый ядовитый?", a: ["Мухомор", "Бледная поганка", "Боровик", "Опенок"], c: 1 },
-        { q: "Сколько букв в русском алфавите?", a: ["30", "32", "33", "35"], c: 2 },
-        { q: "Какое животное спит стоя?", a: ["Лошадь", "Кошка", "Собака", "Лев"], c: 0 },
-        { q: "Какая вода в океане?", a: ["Сладкая", "Соленая", "Кислая", "Пресная"], c: 1 },
-        { q: "Самое быстрое животное на земле:", a: ["Лев", "Заяц", "Гепард", "Тигр"], c: 2 },
-        { q: "В каком океане находится Марианская впадина?", a: ["Атлантический", "Индийский", "Тихий", "Северный"], c: 2 }
-    ],
-    teens: [
-        { q: "Какая формула у поваренной соли?", a: ["H2O", "CO2", "NaCl", "HCl"], c: 2 },
-        { q: "Кто написал роман 'Капитанская дочка'?", a: ["Толстой", "Пушкин", "Лермонтов", "Гоголь"], c: 1 },
-        { q: "Какая планета самая большая в Солнечной системе?", a: ["Земля", "Сатурн", "Юпитер", "Нептун"], c: 2 },
-        { q: "В каком году началась Первая мировая война?", a: ["1914", "1939", "1917", "1905"], c: 0 },
-        { q: "Какой орган человека потребляет больше всего энергии?", a: ["Сердце", "Печень", "Мозг", "Мышцы"], c: 2 },
-        { q: "Что измеряется в Омах?", a: ["Напряжение", "Ток", "Сопротивление", "Мощность"], c: 2 },
-        { q: "Какая столица у Австралии?", a: ["Сидней", "Канберра", "Мельбурн", "Брисбен"], c: 1 },
-        { q: "Какой химический элемент обозначается как Fe?", a: ["Фтор", "Фосфор", "Железо", "Золото"], c: 2 },
-        { q: "Какое самое глубокое озеро в мире?", a: ["Виктория", "Мичиган", "Танганьика", "Байкал"], c: 3 },
-        { q: "Сколько хромосом в здоровой клетке человека?", a: ["44", "46", "48", "23"], c: 1 }
-    ],
-    adults: [
-        { q: "В какой стране изобрели порох?", a: ["Индия", "Греция", "Китай", "Египет"], c: 2 },
-        { q: "Какая денежная валюта в Японии?", a: ["Юань", "Вона", "Иена", "Доллар"], c: 2 },
-        { q: "Кто считается создателем языка программирования Python?", a: ["Билл Гейтс", "Гвидо ван Россум", "Линус Торвальдс", "Марк Цукерберг"], c: 1 },
-        { q: "Что изучает наука энтомология?", a: ["Птиц", "Насекомых", "Рыб", "Растения"], c: 1 },
-        { q: "Какое вещество самое твердое на Земле?", a: ["Сталь", "Графен", "Алмаз", "Титан"], c: 2 },
-        { q: "В каком году распался СССР?", a: ["1989", "1990", "1991", "1993"], c: 2 },
-        { q: "Сколько часовых поясов в России?", a: ["9", "10", "11", "12"], c: 2 },
-        { q: "Какое художественное произведение является самым продаваемым после Библии?", a: ["Дон Кихот", "Гарри Поттер", "Властелин колец", "Маленький принц"], c: 0 },
-        { q: "Какая страна Латинской Америки говорит на португальском?", a: ["Аргентина", "Мексика", "Бразилия", "Колумбия"], c: 2 },
-        { q: "Что из этого НЕ является благородным газом?", a: ["Гелий", "Азот", "Неон", "Аргон"], c: 1 }
-    ]
-};
+            // DOM элементы
+            const screenWelcome = document.getElementById('screen-welcome');
+            const screenQuiz = document.getElementById('screen-quiz');
+            const screenResults = document.getElementById('screen-results');
+            const questionNumEl = document.getElementById('question-num');
+            const questionTextEl = document.getElementById('question-text');
+            const answerContainer = document.getElementById('answer-container');
+            const timerBar = document.getElementById('timer-bar');
+            const resultCircle = document.getElementById('result-circle');
+            const resultScore = document.getElementById('result-score');
+            const resultComment = document.getElementById('result-comment');
 
-let currentCategory = [];
-let questionIndex = 0;
-let score = 0;
-let timer;
-let timeLeft = 20;
+            // ---------- Вспомогательные функции ----------
+            function setScreen(activeId) {
+                screenWelcome.classList.remove('active');
+                screenQuiz.classList.remove('active');
+                screenResults.classList.remove('active');
+                document.getElementById(activeId).classList.add('active');
+            }
 
-// Элементы экранов
-const scrWelcome = document.getElementById('screen-welcome');
-const scrGame = document.getElementById('screen-game');
-const scrResults = document.getElementById('screen-results');
+            function resetGameState() {
+                currentCategory = null;
+                currentQuestionIndex = 0;
+                score = 0;
+                answered = false;
+                started = false;
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = null;
+                timeLeft = 20;
+                timerBar.style.width = '100%';
+            }
 
-// Привязка кнопок старта черезaddEventListener (так надежнее)
-document.getElementById('start-kids').addEventListener('click', () => startQuiz('kids'));
-document.getElementById('start-teens').addEventListener('click', () => startQuiz('teens'));
-document.getElementById('start-adults').addEventListener('click', () => startQuiz('adults'));
-document.getElementById('btn-restart').addEventListener('click', restart);
+            // Таймер
+            function startTimer() {
+                if (timerInterval) clearInterval(timerInterval);
+                timeLeft = 20;
+                timerBar.style.width = '100%';
+                timerInterval = setInterval(() => {
+                    timeLeft -= 0.05;
+                    const percent = Math.max(0, (timeLeft / 20) * 100);
+                    timerBar.style.width = percent + '%';
+                    if (timeLeft <= 0.1) {
+                        clearInterval(timerInterval);
+                        handleTimeOut();
+                    }
+                }, 50);
+            }
 
-// Привязка кнопок ответов
-for (let i = 0; i < 4; i++) {
-    document.getElementById(`btn-${i}`).addEventListener('click', () => checkAnswer(i));
-}
+            function stopTimer() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            }
 
-function startQuiz(ageCategory) {
-    currentCategory = quizData[ageCategory];
-    questionIndex = 0;
-    score = 0;
-    scrWelcome.style.display = 'none';
-    scrGame.style.display = 'block';
-    showQuestion();
-}
+            function handleTimeOut() {
+                if (answered) return;
+                answered = true;
+                stopTimer();
+                timerBar.style.width = '0%';
+                // Не засчитываем балл
+                setTimeout(() => {
+                    nextQuestion();
+                }, 1200);
+            }
 
-function showQuestion() {
-    if (questionIndex >= 10) {
-        endQuiz();
-        return;
-    }
-    
-    clearInterval(timer);
-    timeLeft = 20;
-    document.getElementById('time-left').innerText = timeLeft;
-    
-    timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('time-left').innerText = timeLeft;
-        if (timeLeft <= 0) {
-            checkAnswer(-1);
-        }
-    }, 1000);
+            function nextQuestion() {
+                currentQuestionIndex++;
+                if (currentQuestionIndex >= 10) {
+                    showResults();
+                    return;
+                }
+                answered = false;
+                loadQuestion();
+            }
 
-    let qData = currentCategory[questionIndex];
-    document.getElementById('current-q').innerText = questionIndex + 1;
-    document.getElementById('question-field').innerText = qData.q;
-    
-    for (let i = 0; i < 4; i++) {
-        document.getElementById(`btn-${i}`).innerText = qData.a[i];
-    }
-}
+            function loadQuestion() {
+                const qList = questionsDB[currentCategory];
+                if (!qList || currentQuestionIndex >= qList.length) {
+                    showResults();
+                    return;
+                }
+                const q = qList[currentQuestionIndex];
+                questionNumEl.textContent = `${currentQuestionIndex + 1}/10`;
+                questionTextEl.textContent = q.question;
+                answerContainer.innerHTML = '';
+                q.opts.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'answer-btn';
+                    btn.dataset.answer = idx;
+                    btn.textContent = opt;
+                    btn.onclick = function() {
+                        checkAnswer(idx, this);
+                    };
+                    answerContainer.appendChild(btn);
+                });
+                stopTimer();
+                timerBar.style.width = '100%';
+                timeLeft = 20;
+                startTimer();
+            }
 
-function checkAnswer(selectedIndex) {
+            function checkAnswer(index, button) {
+                if (answered) return;
+                answered = true;
+                stopTimer();
+                const qList = questionsDB[currentCategory];
+                const correctIdx = qList[currentQuestionIndex].correct;
+
+                // Визуальная обратная связь
+                const allBtns = answerContainer.querySelectorAll('.answer-btn');
+                allBtns.forEach(b => b.disabled = true);
+
+                if (index === correctIdx) {
+                    score++;
+                    button.classList.add('correct');
+                } else {
+                    button.classList.add('wrong');
+                    // подсветить правильный
+                    allBtns[correctIdx].classList.add('correct');
+                }
+
+                timerBar.style.width = '100%';
+                setTimeout(() => {
+                    nextQuestion();
+                }, 900);
+            }
+
+            function showResults() {
+                stopTimer();
+                setScreen('screen-results');
+                const total = 10;
+                let rating = 2;
+                let comment = '';
+                if (score <= 3) {
+                    rating = 2;
+                    comment = 'Не расстраивайся — попробуй ещё раз, всё получится!';
+                } else if (score <= 5) {
+                    rating = 3;
+                    comment = 'Неплохо, но есть куда расти. В следующий раз лучше!';
+                } else if (score <= 7) {
+                    rating = 4;
+                    comment = 'Отличная работа! Ты на верном пути.';
+                } else {
+                    rating = 5;
+                    comment = 'Превосходно! Ты — настоящий эрудит 🔥';
+                }
+                resultCircle.textContent = rating;
+                resultCircle.style.background = `conic-gradient(#88d8b0 ${(rating/5)*360}deg, #2a2a40 ${(rating/5)*360}deg)`;
+                resultScore.textContent = `${score} / ${total}`;
+                resultComment.textContent = comment;
+            }
+
+            // ---------- Публичные функции (вызываются из HTML) ----------
+            window.startQuiz = function(category) {
+                if (started) return; // защита от двойного клика
+                started = true;
+                resetGameState();
+                currentCategory = category;
+                currentQuestionIndex = 0;
+                score = 0;
+                answered = false;
+                setScreen('screen-quiz');
+                loadQuestion();
+            };
+
+            window.checkAnswer = function(index, button) {
+                checkAnswer(index, button);
+            };
+
+            window.resetQuiz = function() {
+                resetGameState();
+                setScreen('screen-welcome');
+                started = false;
+            };
+
+            // ---------- Дублирование логики через window.onload ----------
+            window.addEventListener('load', function() {
+                // Делегирование для кнопок старта
+                document.addEventListener('click', function(e) {
+                    const startBtn = e.target.closest('.btn.kids, .btn.teens, .btn.pros');
+                    if (startBtn && !started) {
+                        e.stopPropagation();
+                        const cat = startBtn.classList.contains('kids') ? 'kids' :
+                                    startBtn.classList.contains('teens') ? 'teens' : 'pros';
+                        window.startQuiz(cat);
+                    }
+                });
+
+                // Делегирование для кнопок ответов (дублирование)
+                document.addEventListener('click', function(e) {
+                    const answerBtn = e.target.closest('.answer-btn');
+                    if (answerBtn && !answered) {
+                        e.stopPropagation();
+                        const index = parseInt(answerBtn.dataset.answer, 10);
+                        window.checkAnswer(index, answerBtn);
+                    }
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
