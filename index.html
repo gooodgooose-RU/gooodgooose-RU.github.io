@@ -55,8 +55,8 @@
 </head>
 <body>
 
-<!-- Background music -->
-<audio id="kahoot-music" loop src="https://archive.org/download/KahootLobbyMusic/Kahoot%20Lobby%20Music%20%28HD%29.mp3"></audio>
+<!-- YouTube player container (hidden) -->
+<div id="youtube-player" style="display:none;"></div>
 
 <!-- Screen 1: Welcome -->
 <div class="screen active" id="screen-welcome">
@@ -141,7 +141,6 @@ var score = 0;
 var timeLeft = 20;
 var timerId = null;
 var answered = false;
-var bgMusic = document.getElementById('kahoot-music');
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
@@ -153,8 +152,7 @@ function startQuiz(cat) {
   currentQ = 0;
   score = 0;
   showScreen('screen-quiz');
-  // Start background music
-  bgMusic.play().catch(function(e){ console.log('Music autoplay blocked by browser'); });
+  if (player && player.playVideo) { player.playVideo(); }
   loadQuestion();
 }
 
@@ -182,7 +180,7 @@ function loadQuestion() {
   bar.style.width = '100%';
   bar.style.background = '#56f0a1';
   bar.style.transition = 'none';
-  bar.offsetHeight; // force reflow
+  bar.offsetHeight;
   bar.style.transition = 'width 1s linear';
 
   if (timerId) clearInterval(timerId);
@@ -232,8 +230,7 @@ function answer(idx) {
 
 function finishQuiz() {
   showScreen('screen-finish');
-  // Stop background music
-  bgMusic.pause();
+  if (player && player.stopVideo) { player.stopVideo(); }
 
   var pool = questions[currentCat];
   var total = pool.length;
@@ -259,5 +256,24 @@ window.onload = function() {
   showScreen('screen-welcome');
 };
 </script>
+
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+var player;
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('youtube-player', {
+    height: '0',
+    width: '0',
+    videoId: 'b_fLp7hI4C8',
+    playerVars: {
+      'autoplay': 0,
+      'loop': 1,
+      'playlist': 'b_fLp7hI4C8'
+    }
+  });
+}
+</script>
+
 </body>
 </html>
