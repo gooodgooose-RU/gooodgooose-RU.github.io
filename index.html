@@ -3,82 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Моя визитка | gooodgooose-RU</title>
-    
-    <!-- ТУТ ЖИВУТ СТИЛИ (CSS) -->
+    <title>GooseQuiz — Аналог Kahoot!</title>
     <style>
+        :root {
+            --bg-color: #121214;
+            --card-bg: #1a1a1e;
+            --text-color: #ffffff;
+            --accent-color: #00ff88;
+            --danger-color: #ff4444;
+            --blue-color: #00d2ff;
+            --purple-color: #9b51e0;
+        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121214;
-            color: #ffffff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
-        .card {
-            background-color: #1a1a1e;
+        .quiz-container {
+            background-color: var(--card-bg);
             padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            max-width: 350px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             width: 100%;
+            max-width: 600px;
             border: 1px solid #2a2a30;
+            text-align: center;
         }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-            color: #00ff88;
-        }
-        p {
-            color: #a0a0a5;
-            font-size: 16px;
-            margin-bottom: 24px;
-        }
+        h1 { color: var(--accent-color); margin-top: 0; }
+        .hidden { display: none !important; }
         .btn {
             display: block;
-            background-color: #2a2a30;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            border: none;
-            cursor: pointer;
             width: 100%;
+            background-color: #2a2a30;
+            color: white;
+            border: 2px solid transparent;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
             box-sizing: border-box;
         }
         .btn:hover {
-            background-color: #00ff88;
-            color: #121214;
             transform: translateY(-2px);
+            background-color: #3a3a42;
+            border-color: var(--accent-color);
         }
+        .btn-age-1 { background-color: #3498db; }
+        .btn-age-2 { background-color: #9b51e0; }
+        .btn-age-3 { background-color: #e67e22; }
+        
+        /* Стили сетки ответов в стиле Kahoot */
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .answer-btn {
+            padding: 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+        .answer-btn:active { transform: scale(0.98); }
+        .ans-0 { background-color: #e21b3c; } /* Красный треугольник */
+        .ans-1 { background-color: #1368ce; } /* Синий ромб */
+        .ans-2 { background-color: #d89e00; } /* Желтый круг */
+        .ans-3 { background-color: #26890c; } /* Зеленый квадрат */
+        
+        /* Таймер и прогресс */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .timer {
+            background: #2a2a30;
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: var(--blue-color);
+            font-size: 18px;
+        }
+        .progress { color: #a0a0a5; }
+        .question-text { font-size: 22px; margin-bottom: 25px; min-height: 60px; }
+        
+        .score-num { font-size: 48px; color: var(--accent-color); font-weight: bold; margin: 20px 0; }
+        .grade { font-size: 24px; font-weight: bold; color: var(--blue-color); margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <!-- ТУТ ЖИВЕТ СТРУКТУРА (HTML) -->
-    <div class="card">
-        <h1>gooodgooose-RU</h1>
-        <p>Добро пожаловать на мой личный сайт!</p>
-        
-        <!-- Ссылки на ваши будущие проекты или соцсети -->
-        <a href="https://github.com" target="_blank" class="btn">Мой GitHub профиль</a>
-        <button class="btn" id="magicBtn">Нажми для магии ✨</button>
+<div class="quiz-container">
+    <!-- ЭКРАН 1: ВЫБОР ВОЗРАСТА -->
+    <div id="screen-welcome">
+        <h1>GooseQuiz 🚀</h1>
+        <p>Добро пожаловать в аналог Kahoot! Выберите категорию теста:</p>
+        <button class="btn btn-age-1" onclick="startQuiz('kids')">Дети (7-10 лет)</button>
+        <button class="btn btn-age-2" onclick="startQuiz('teens')">Подростки (11-15 лет)</button>
+        <button class="btn btn-age-3" onclick="startQuiz('adults')">Профи (16+ лет)</button>
     </div>
 
-    <!-- ТУТ ЖИВУТ СКРИПТЫ (JavaScript) -->
-    <script>
-        const button = document.getElementById('magicBtn');
-        button.addEventListener('click', () => {
-            alert('Магия сработала! JavaScript полностью исправен 🚀');
-        });
-    </script>
+    <!-- ЭКРАН 2: ИГРОВОЙ ПРОЦЕСС -->
+    <div id="screen-game" class="hidden">
+        <div class="quiz-header">
+            <div class="progress">Вопрос: <span id="current-q">1</span>/10</div>
+            <div class="timer">⏱️ <span id="time-left">20</span>с</div>
+        </div>
+        <div class="question-text" id="question-field">Загрузка вопроса...</div>
+        <div class="answers-grid">
+            <button class="answer-btn ans-0" onclick="checkAnswer(0)" id="btn-0">Вариант 1</button>
+            <button class="answer-btn ans-1" onclick="checkAnswer(1)" id="btn-1">Вариант 2</button>
+            <button class="answer-btn ans-2" onclick="checkAnswer(2)" id="btn-2">Вариант 3</button>
+            <button class="answer-btn ans-3" onclick="checkAnswer(3)" id="btn-3">Вариант 4</button>
+        </div>
+    </div>
 
-</body>
-</html>
+    <!-- ЭКРАН 3: РЕЗУЛЬТАТЫ -->
+    <div id="screen-results" class="hidden">
+        <h1>Результаты игры 🎉</h1>
+        <p>Вы ответили на все вопросы!</p>
+        <div class="score-num"><span id="final-score">0</span> / 10</div>
+        <div class="grade" id="final-grade">Оценка</div>
+        <p id="grade-comment">Комментарий</p>
+        <button class="btn" onclick="restart()">Играть снова 🔄</button>
+    </div>
+</div>
+
+<script>
+// БАЗА ДАННЫХ ВОПРОСОВ (По 10 на каждый возраст)
+const quizData = {
+    kids: [
+        { q: "Сколько планет в Солнечной системе?", a: ["7", "8", "9", "10"], c: 1 },
+        { q: "Какая птица не умеет летать?", a: ["Воробей", "Пингвин", "Орел", "Сова"], c: 1 },
+        { q: "Что длится дольше всего?", a: ["Час", "Минута", "Год", "Месяц"], c: 2 },
+        { q: "Спутник Земли — это...", a: ["Марс", "Солнце", "Луна", "Сатурн"], c: 2 },
+        { q: "Какой гриб самый ядовитый?", a: ["Мухомор", "Бледная поганка", "Боровик", "Опенок"], c: 1 },
+        { q: "Сколько букв в русском алфавите?", a: ["30", "32", "33", "35"], c: 2 },
+        { q: "Какое животное спит стоя?", a: ["Лошадь", "Кошка", "Собака", "Лев"], c: 0 },
+        { q: "Какая вода в океане?", a: ["Сладкая", "Соленая", "Кислая", "Пресная"], c: 1 },
+        { q: "Самое быстрое животное на земле:", a: ["Лев", "Заяц", "Гепард", "Тигр"], c: 2 },
+        { q: "В каком океане находится Марианская впадина?", a: ["Атлантический", "Индийский", "Тихий", "Северный"], c: 2 }
+    ],
+    teens: [
+        { q: "Какая формула у поваренной соли?", a: ["H2O", "CO2", "NaCl", "HCl"], c: 2 },
+        { q: "Кто написал роман 'Капитанская дочка'?", a: ["Толстой", "Пушкин", "Лермонтов", "Гоголь"], c: 1 },
+        { q: "Какая планета самая большая в Солнечной системе?", a: ["Земля", "Сатурн", "Юпитер", "Нептун"], c: 2 },
+        { q: "В каком году началась Первая мировая война?", a: ["1914", "1939", "1917", "1905"], c: 0 },
+        { q: "Какой орган человека потребляет больше всего энергии?", a: ["Сердце", "Печень", "Мозг", "Мышцы"], c: 2 },
+        { q: "Что измеряется в Омах?", a: ["Напряжение", "Ток", "Сопротивление", "Мощность"], c: 2 },
+        { q: "Какая столица у Австралии?", a: ["Сидней", "Канберра", "Мельбурн", "Брисбен"], c: 1 },
+        { q: "Какой химический элемент обозначается как Fe?", a: ["Фтор", "Фосфор", "Железо", "Золото"], c: 2 },
+        { q: "Какое самое глубокое озеро в мире?", a: ["Виктория", "Мичиган", "Танганьика", "Байкал"], c: 3 },
+        { q: "Сколько хромосом в здоровой клетке человека?", a: ["44", "46", "48", "23"], c: 1 }
+    ],
+    adults: [
+        { q: "В какой стране изобрели порох?", a: ["Индия", "Греция", "Китай", "Египет"], c: 2 },
+        { q: "Какая денежная валюта в Японии?", a: ["Юань", "Вона", "Иена", "Доллар"], c: 2 },
+        { q: "Кто считается создателем языка программирования Python?", a: ["Билл Гейтс", "Гвидо ван Россум", "Линус Торвальдс", "Марк Цукерберг"], c: 1 },
+        { q: "Что изучает наука энтомология?", a: ["Птиц", "Насекомых", "Рыб", "Растения"], c: 1 },
+        { q: "Какое вещество самое твердое на Земле?", a: ["Сталь", "Графен", "Алмаз", "Титан"], c: 2 },
+        { q: "В каком году распался СССР?", a: ["1989", "1990", "1991", "1993"], c: 2 },
+        { q: "Сколько часовых поясов в России?", a: ["9", "10", "11", "12"], c: 2 },
+        { q: "Какое художественное произведение является самым продаваемым после Библии?", a: ["Дон Кихот", "Гарри Поттер", "Властелин колец", "Маленький принц"], c: 0 },
+        { q: "Какая страна Латинской Америки говорит на португальском?", a: ["Аргентина", "Мексика", "Бразилия", "Колумбия"], c: 2 },
+        { q: "Что из этого НЕ является благородным газом?", a: ["Гелий", "Азот", "Неон", "Аргон"], c: 1 }
+    ]
+};
+
+let currentCategory = [];
+let questionIndex = 0;
+let score = 0;
+let timer;
+let timeLeft = 20;
+
+function startQuiz(ageCategory) {
+    currentCategory = quizData[ageCategory];
+    questionIndex = 0;
+    score = 0;
+    
+    document.getElementById('screen-welcome').classList.add('hidden');
+    document.getElementById('screen-game').classList.remove('hidden');
+    
+    showQuestion();
+}
+
+function showQuestion() {
+    if (questionIndex >= 10) {
+        endQuiz();
+        return;
+    }
+    
+    // Сброс и запуск таймера (20 секунд на вопрос)
+    clearInterval(timer);
+    timeLeft = 20;
+    document.getElementById('time-left').innerText = timeLeft;
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('time-left').innerText = timeLeft;
+        if (timeLeft <= 0) {
+            checkAnswer(-1); // Если время вышло — автоматический промах
+        }
+    }, 1000);
+
+    let qData = currentCategory[questionIndex];
+    document.getElementById('current-q').innerText = questionIndex + 1;
+    document.getElementById('question-field').innerText = qData.q;
+    
+    for (let i = 0; i < 4; i++) {
+        document.getElementById(`btn-${i}`).innerText = qData.a[i];
+    }
+}
+
+function checkAnswer(selectedIndex) {
+    clearInterval(timer);
+
 
