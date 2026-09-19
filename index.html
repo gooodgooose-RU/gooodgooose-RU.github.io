@@ -55,8 +55,8 @@
 </head>
 <body>
 
-<!-- Hidden YouTube player container -->
-<div id="player" style="display:none;"></div>
+<!-- Background music -->
+<audio id="kahoot-music" loop src="https://archive.org/download/kahoot-lobby-music_202104/Kahoot%20Lobby%20Music.mp3"></audio>
 
 <!-- Screen 1: Welcome -->
 <div class="screen active" id="screen-welcome">
@@ -74,7 +74,7 @@
 <!-- Screen 2: Quiz -->
 <div class="screen" id="screen-quiz">
   <div class="quiz-header">
-    <div class="question-num" id="qNum">Вопрос: 1/10</div>
+    <div class="question-num" id="qNum">Вопрос: 1/5</div>
     <div class="timer-wrap">
       <div class="timer-bar-bg"><div class="timer-bar-fill" id="timerBar"></div></div>
       <div class="timer-text" id="timerText">20</div>
@@ -88,7 +88,7 @@
 <div class="screen" id="screen-finish">
   <div class="finish-card">
     <h1>Результаты 🎉</h1>
-    <div class="score-display" id="scoreDisplay">0 / 10</div>
+    <div class="score-display" id="scoreDisplay">0 / 5</div>
     <div class="grade-display" id="gradeDisplay">Оценка: 5</div>
     <p class="comment" id="commentText"></p>
     <button class="restart-btn" onclick="restart()">Играть снова</button>
@@ -107,7 +107,12 @@ var questions = {
     {q:"Что делает пчела?", a:["Мёд","Молоко","Хлеб","Сметану"], c:0},
     {q:"Какая цифра идёт после пяти?", a:["Четыре","Шесть","Семь","Восемь"], c:1},
     {q:"Где живёт рыба?", a:["В лесу","В воде","В небе","В норе"], c:1},
-    {q:"Какой формы мяч?", a:["Квадратный","Круглый","Треугольный","Овальный"], c:1}
+    {q:"Какой формы мяч?", a:["Квадратный","Круглый","Треугольный","Овальный"], c:1},
+    {q:"Сколько месяцев в году?", a:["10","11","12","13"], c:2},
+    {q:"Какой зверь самый большой?", a:["Слон","Мышь","Заяц","Лиса"], c:0},
+    {q:"Что растёт на яблоне?", a:["Груши","Яблоки","Картошка","Огурцы"], c:1},
+    {q:"Какого цвета снег?", a:["Зелёный","Белый","Синий","Красный"], c:1},
+    {q:"Кто говорит «Гав»?", a:["Кошка","Собака","Утка","Петух"], c:1}
   ],
   teens: [
     {q:"Столица Австралии?", a:["Сидней","Канберра","Мельбурн","Перт"], c:1},
@@ -119,7 +124,12 @@ var questions = {
     {q:"Кто нарисовал «Мону Лизу»?", a:["Микеланджело","Рафаэль","Да Винчи","Ван Гог"], c:2},
     {q:"Самая длинная река в мире?", a:["Волга","Амазонка","Нил","Ганг"], c:2},
     {q:"В каком году распался СССР?", a:["1989","1990","1991","1992"], c:2},
-    {q:"Какая планета ближе всего к Солнцу?", a:["Венера","Меркурий","Земля","Марс"], c:1}
+    {q:"Какая планета ближе всего к Солнцу?", a:["Венера","Меркурий","Земля","Марс"], c:1},
+    {q:"Столица Канады?", a:["Торонто","Оттава","Ванкувер","Монреаль"], c:1},
+    {q:"Кто открыл Америку для европейцев?", a:["Магеллан","Колумб","Кук","Васко да Гама"], c:1},
+    {q:"Сколько струн у классической гитары?", a:["4","5","6","7"], c:2},
+    {q:"Какой газ нужен для дыхания?", a:["Азот","Кислород","Водород","Гелий"], c:1},
+    {q:"Автор романа «Мастер и Маргарита»?", a:["Булгаков","Чехов","Гоголь","Бунин"], c:0}
   ],
   pro: [
     {q:"Кто сформулировал теорию относительности?", a:["Ньютон","Эйнштейн","Бор","Резерфорд"], c:1},
@@ -127,20 +137,39 @@ var questions = {
     {q:"В каком году началась Столетняя война?", a:["1337","1415","1206","1453"], c:0},
     {q:"Что такое HTML?", a:["Язык программирования","Язык разметки","База данных","Протокол"], c:1},
     {q:"Кто написал «Преступление и наказание»?", a:["Толстой","Гоголь","Достоевский","Тургенев"], c:2},
-    {q:"Какое число называется числом Эйлера (e)?", a:["2{,}718","3{,}14","1{,}618","0{,}577"], c:0},
     {q:"Какая страна родина футбола?", a:["Бразилия","Италия","Англия","Германия"], c:2},
     {q:"Кто изобрёл телефон?", a:["Эдисон","Белл","Маркони","Тесла"], c:1},
     {q:"Какой элемент имеет химический символ Au?", a:["Серебро","Золото","Алюминий","Медь"], c:1},
-    {q:"Какой самый маленький угол в равностороннем треугольнике?", a:["30°","45°","60°","90°"], c:2}
+    {q:"Какой самый маленький угол в равностороннем треугольнике?", a:["30°","45°","60°","90°"], c:2},
+    {q:"Кто написал симфонию №9?", a:["Моцарт","Бетховен","Бах","Чайковский"], c:1},
+    {q:"Столица Бразилии?", a:["Рио-де-Жанейро","Бразилиа","Сан-Паулу","Сальвадор"], c:1},
+    {q:"Что измеряет шкала Рихтера?", a:["Температуру","Землетрясения","Ветер","Давление"], c:1},
+    {q:"Кто создал теорию эволюции?", a:["Мендель","Дарвин","Линней","Ламарк"], c:1},
+    {q:"Сколько костей у взрослого человека?", a:["186","206","226","246"], c:1},
+    {q:"В каком году высадка на Луну?", a:["1965","1969","1971","1975"], c:1}
   ]
 };
 
+var QUESTIONS_PER_GAME = 5;
 var currentCat = 'kids';
 var currentQ = 0;
 var score = 0;
 var timeLeft = 20;
 var timerId = null;
 var answered = false;
+var gameQuestions = [];
+var bgMusic = document.getElementById('kahoot-music');
+
+function shuffle(arr) {
+  var copy = arr.slice();
+  for (var i = copy.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = tmp;
+  }
+  return copy;
+}
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
@@ -148,25 +177,23 @@ function showScreen(id) {
 }
 
 function startQuiz(cat) {
-  // Запускаем музыку строго по клику пользователя
-  if (player && typeof player.playVideo === 'function') {
-    player.unMute();   // снимаем беззвучный режим на всякий случай
-    player.playVideo(); // запускаем воспроизведение
-  }
-
   currentCat = cat;
   currentQ = 0;
   score = 0;
+  // Случайно выбираем 5 вопросов из пула категории
+  gameQuestions = shuffle(questions[cat]).slice(0, QUESTIONS_PER_GAME);
   showScreen('screen-quiz');
+  // Запускаем фоновую музыку по клику пользователя
+  bgMusic.play().catch(function(e){ console.log('Music autoplay blocked'); });
   loadQuestion();
 }
 
 function loadQuestion() {
   answered = false;
-  var pool = questions[currentCat];
-  var item = pool[currentQ];
+  var item = gameQuestions[currentQ];
+  var total = gameQuestions.length;
 
-  document.getElementById('qNum').textContent = 'Вопрос: ' + (currentQ + 1) + '/' + pool.length;
+  document.getElementById('qNum').textContent = 'Вопрос: ' + (currentQ + 1) + '/' + total;
   document.getElementById('qText').textContent = item.q;
 
   var grid = document.getElementById('answersGrid');
@@ -211,8 +238,7 @@ function answer(idx) {
   answered = true;
   clearInterval(timerId);
 
-  var pool = questions[currentCat];
-  var item = pool[currentQ];
+  var item = gameQuestions[currentQ];
   var buttons = document.querySelectorAll('.ans-btn');
 
   buttons.forEach(function(b){ b.classList.add('disabled'); });
@@ -226,7 +252,7 @@ function answer(idx) {
   }
 
   currentQ++;
-  if (currentQ >= pool.length) {
+  if (currentQ >= gameQuestions.length) {
     setTimeout(finishQuiz, 1500);
   } else {
     setTimeout(loadQuestion, 1500);
@@ -235,21 +261,17 @@ function answer(idx) {
 
 function finishQuiz() {
   showScreen('screen-finish');
-
   // Останавливаем музыку на финальном экране
-  if (player && typeof player.stopVideo === 'function') {
-    player.stopVideo();
-  }
+  bgMusic.pause();
 
-  var pool = questions[currentCat];
-  var total = pool.length;
+  var total = gameQuestions.length;
   document.getElementById('scoreDisplay').textContent = score + ' / ' + total;
 
   var grade, comment;
   if (score === total) { grade = '5+'; comment = 'Идеально! Ты настоящий эрудит! 🌟'; }
-  else if (score >= 8) { grade = '5'; comment = 'Отличный результат! Почти безупречно!'; }
-  else if (score >= 6) { grade = '4'; comment = 'Хорошо! Знания на твёрдую четвёрку.'; }
-  else if (score >= 4) { grade = '3'; comment = 'Неплохо, но есть куда расти. Попробуй ещё!'; }
+  else if (score >= 4) { grade = '5'; comment = 'Отличный результат! Почти безупречно!'; }
+  else if (score >= 3) { grade = '4'; comment = 'Хорошо! Знания на твёрдую четвёрку.'; }
+  else if (score >= 2) { grade = '3'; comment = 'Неплохо, но есть куда расти. Попробуй ещё!'; }
   else { grade = '2'; comment = 'Не сдавайся! В следующий раз точно получится.'; }
 
   document.getElementById('gradeDisplay').textContent = 'Оценка: ' + grade;
@@ -264,25 +286,6 @@ function restart() {
 window.onload = function() {
   showScreen('screen-welcome');
 };
-</script>
-
-<!-- YouTube IFrame API -->
-<script src="https://www.youtube.com/iframe_api"></script>
-<script>
-var player;
-function onYouTubeIframeAPIReady() {
-  player = new YT.Player('player', {
-    height: '0',
-    width: '0',
-    videoId: 'b_fLp7hI4C8',
-    playerVars: {
-      'autoplay': 0,
-      'loop': 1,
-      'playlist': 'b_fLp7hI4C8',
-      'controls': 0
-    }
-  });
-}
 </script>
 
 </body>
