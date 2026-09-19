@@ -1,559 +1,254 @@
-html
-Копировать
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Викторина — аналог Kahoot</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Викторина — Kahoot Style</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,Arial,sans-serif}
+  body{background:#26223e;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .screen{display:none;width:100%;max-width:900px;padding:20px}
+  .screen.active{display:block}
 
-        body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: #121212;
-            color: #f0f0f0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-image: radial-gradient(circle at 20% 20%, #1e1e3a 0%, #0a0a1a 100%);
-        }
+  /* Welcome */
+  .welcome-card{text-align:center}
+  .welcome-card h1{font-size:2.8rem;margin-bottom:10px;color:#fff;letter-spacing:1px}
+  .welcome-card p{font-size:1.1rem;color:#ccc;margin-bottom:40px}
+  .cat-grid{display:flex;flex-direction:column;gap:20px;max-width:480px;margin:0 auto}
+  .cat-btn{padding:22px;border:none;border-radius:16px;font-size:1.4rem;font-weight:700;color:#fff;cursor:pointer;transition:transform .15s,filter .15s}
+  .cat-btn:hover{transform:translateY(-4px);filter:brightness(1.15)}
+  .cat-btn:active{transform:translateY(2px)}
+  .cat-kids{background:linear-gradient(135deg,#ff5a5f,#e63946)}
+  .cat-teens{background:linear-gradient(135deg,#33c4ff,#1a73e8)}
+  .cat-pro{background:linear-gradient(135deg,#56f0a1,#22a06b)}
 
-        #app {
-            width: 100%;
-            max-width: 650px;
-            padding: 20px;
-        }
+  /* Quiz */
+  .quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+  .question-num{font-size:1.3rem;font-weight:700}
+  .timer-wrap{display:flex;align-items:center;gap:10px}
+  .timer-bar-bg{width:120px;height:14px;background:#3d3658;border-radius:7px;overflow:hidden}
+  .timer-bar-fill{height:100%;border-radius:7px;background:#56f0a1;transition:width 1s linear;width:100%}
+  .timer-text{font-size:1.2rem;font-weight:700;min-width:36px;text-align:right}
+  .question-text{font-size:2rem;font-weight:700;text-align:center;margin:48px 0}
+  .answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .ans-btn{padding:28px 20px;border:none;border-radius:16px;font-size:1.25rem;font-weight:700;color:#fff;cursor:pointer;transition:transform .12s,filter .15s;text-align:left}
+  .ans-btn:hover{transform:translateY(-4px);filter:brightness(1.12)}
+  .ans-btn:active{transform:translateY(2px)}
+  .ans-btn.disabled{pointer-events:none}
+  .ans-btn.correct{outline:4px solid #fff}
+  .ans-btn.wrong{outline:4px solid #333;opacity:.6}
+  .ans-0{background:linear-gradient(135deg,#ff5a5f,#e63946)}
+  .ans-1{background:linear-gradient(135deg,#33c4ff,#1a73e8)}
+  .ans-2{background:linear-gradient(135deg,#ffba3d,#f59000)}
+  .ans-3{background:linear-gradient(135deg,#56f0a1,#22a06b)}
 
-        /* экраны */
-        .screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 400px;
-            background: rgba(20, 20, 40, 0.85);
-            backdrop-filter: blur(12px);
-            border-radius: 28px;
-            padding: 30px 25px;
-            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
-            text-align: center;
-        }
-
-        .screen.active {
-            display: flex;
-        }
-
-        h1, h2, h3 {
-            font-weight: 600;
-            letter-spacing: -0.3px;
-        }
-
-        h1 {
-            font-size: 2.2rem;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #f9a825, #ff5959);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .welcome-description {
-            color: #b0b0c0;
-            margin-bottom: 30px;
-            font-size: 1.1rem;
-            max-width: 400px;
-        }
-
-        .btn-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            width: 100%;
-            max-width: 400px;
-            margin-top: 10px;
-        }
-
-        .btn {
-            border: none;
-            border-radius: 18px;
-            padding: 18px 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.18s ease;
-            background: #2a2a40;
-            color: #1e1e2e;
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
-            position: relative;
-            letter-spacing: 0.3px;
-            outline: none;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            filter: brightness(1.3);
-            background: #383855;
-            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
-        }
-
-        .btn:active {
-            transform: translateY(1px);
-            filter: brightness(0.9);
-            transition: all 0.05s;
-        }
-
-        .btn.kids {
-            background: #f9a825;
-        }
-
-        .btn.teens {
-            background: #6a9fb5;
-        }
-
-        .btn.pros {
-            background: #88d8b0;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            pointer-events: none;
-            filter: grayscale(0.4);
-        }
-
-        /* экран вопроса */
-        .question-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin-bottom: 20px;
-            font-size: 1.1rem;
-            color: #c5c5d5;
-        }
-
-        .question-num {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-weight: 600;
-        }
-
-        .timer-outer {
-            width: 60px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-left: 12px;
-        }
-
-        .timer-bar {
-            height: 100%;
-            width: 100%;
-            background: #f9a825;
-            border-radius: 10px;
-            transition: width 0.05s linear;
-        }
-
-        .question-text {
-            font-size: 1.7rem;
-            font-weight: 600;
-            line-height: 1.4;
-            margin: 15px 0 25px;
-            color: #ffffff;
-            word-break: break-word;
-        }
-
-        .answer-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
-            width: 100%;
-            max-width: 420px;
-            margin-top: 5px;
-        }
-
-        .answer-btn {
-            background: #2e2e45;
-            color: #ffffff;
-            border-radius: 16px;
-            padding: 16px 10px;
-            font-size: 1.05rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s;
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
-            text-align: left;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            letter-spacing: 0.2px;
-        }
-
-        .answer-btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.4);
-            background: #3d3d5c;
-        }
-
-        .answer-btn:active {
-            transform: translateY(1px);
-            filter: brightness(0.8);
-        }
-
-        .answer-btn.correct {
-            background: #88d8b0;
-            color: #0b2b2b;
-            box-shadow: 0 0 20px #88d8b0aa;
-        }
-
-        .answer-btn.wrong {
-            background: #ff7c7c;
-            color: #2d0b0b;
-            box-shadow: 0 0 20px #ff7c7c88;
-        }
-
-        /* экран результатов */
-        .result-circle {
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            background: conic-gradient(#88d8b0 0deg, #88d8b0 0deg, #2a2a40 0deg);
-            margin: 0 auto 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.8rem;
-            font-weight: 700;
-            color: #1e1e2e;
-            box-shadow: 0 0 35px #88d8b066;
-        }
-
-        .score-comment {
-            font-size: 1.3rem;
-            margin: 10px 0 5px;
-            font-weight: 500;
-            color: #ddd;
-        }
-
-        .play-again {
-            margin-top: 25px;
-            background: #f9a825;
-            color: #0b1f2b;
-            font-weight: 700;
-            letter-spacing: 0.4px;
-            padding: 16px 35px;
-            border-radius: 40px;
-            font-size: 1.1rem;
-            box-shadow: 0 10px 25px #f9a82566;
-        }
-
-        .play-again:hover {
-            filter: brightness(1.2);
-            transform: translateY(-2px);
-        }
-
-        @media (max-width: 450px) {
-            .btn-grid {
-                grid-template-columns: 1fr;
-            }
-            .answer-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  /* Finish */
+  .finish-card{text-align:center}
+  .finish-card h1{font-size:2.4rem;margin-bottom:16px}
+  .score-display{font-size:3.5rem;font-weight:800;margin:20px 0;color:#56f0a1}
+  .grade-display{font-size:2rem;font-weight:700;margin-bottom:12px;color:#ffba3d}
+  .comment{font-size:1.15rem;color:#ccc;margin-bottom:40px;max-width:500px;margin-left:auto;margin-right:auto}
+  .restart-btn{padding:18px 48px;border:none;border-radius:14px;font-size:1.3rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#a259ff,#7b2fe6);cursor:pointer;transition:transform .15s,filter .15s}
+  .restart-btn:hover{transform:translateY(-4px);filter:brightness(1.15)}
+  .restart-btn:active{transform:translateY(2px)}
+</style>
 </head>
 <body>
-    <div id="app">
-        <!-- Экран 1: Приветствие -->
-        <div id="screen-welcome" class="screen active">
-            <h1>🧠 Викторина</h1>
-            <p class="welcome-description">Выбери возрастную категорию — вопросы подстроятся под тебя.</p>
-            <div class="btn-grid">
-                <button class="btn kids" onclick="startQuiz('kids')">Дети (7–10 лет)</button>
-                <button class="btn teens" onclick="startQuiz('teens')">Подростки (11–15 лет)</button>
-                <button class="btn pros" onclick="startQuiz('pros')">Профи (16+ лет)</button>
-            </div>
-        </div>
 
-        <!-- Экран 2: Игра -->
-        <div id="screen-quiz" class="screen">
-            <div class="question-header">
-                <span>Вопрос: <span id="question-num">1/10</span></span>
-                <div class="timer-outer">
-                    <div id="timer-bar" class="timer-bar"></div>
-                </div>
-            </div>
-            <div id="question-text" class="question-text"></div>
-            <div id="answer-container" class="answer-grid"></div>
-        </div>
-
-        <!-- Экран 3: Финиш -->
-        <div id="screen-results" class="screen">
-            <div class="result-circle" id="result-circle">0</div>
-            <h2 id="result-score" style="font-size:2rem; margin:5px 0;">0 / 10</h2>
-            <p class="score-comment" id="result-comment"></p>
-            <button class="play-again" onclick="resetQuiz()">🔄 Играть снова</button>
-        </div>
+<!-- Screen 1: Welcome -->
+<div class="screen active" id="screen-welcome">
+  <div class="welcome-card">
+    <h1>🎯 Викторина</h1>
+    <p>Выберите свою категорию и проверьте эрудицию!</p>
+    <div class="cat-grid">
+      <button class="cat-btn cat-kids" onclick="startQuiz('kids')">Дети (7–10 лет)</button>
+      <button class="cat-btn cat-teens" onclick="startQuiz('teens')">Подростки (11–15 лет)</button>
+      <button class="cat-btn cat-pro" onclick="startQuiz('pro')">Профи (16+ лет)</button>
     </div>
+  </div>
+</div>
 
-    <script>
-        (function() {
-            // ---------- База вопросов ----------
-            const questionsDB = {
-                kids: [
-                    { q: "Какое животное называют символом мудрости?", opts: ["Сова", "Лиса", "Медведь", "Заяц"], correct: 0 },
-                    { q: "Сколько ног у паука?", opts: ["6", "8", "10", "12"], correct: 1 },
-                    { q: "Как называется столица России?", opts: ["Санкт-Петербург", "Казань", "Москва", "Новгород"], correct: 2 },
-                    { q: "Какого цвета чистое небо днём?", opts: ["Синее", "Белое", "Серое", "Жёлтое"], correct: 0 },
-                    { q: "Кто написал сказку «Колобок»?", opts: ["А.С. Пушкин", "Народная", "Л.Н. Толстой", "К.И. Чуковский"], correct: 1 },
-                    { q: "Сколько месяцев в году?", opts: ["10", "11", "12", "13"], correct: 2 },
-                    { q: "Как называется естественный спутник Земли?", opts: ["Марс", "Солнце", "Луна", "Венера"], correct: 2 },
-                    { q: "Чем дышат рыбы?", opts: ["Лёгкими", "Жабрами", "Кожей", "Трахеями"], correct: 1 },
-                    { q: "Какое время года наступает после зимы?", opts: ["Лето", "Осень", "Весна", "Снова зима"], correct: 2 },
-                    { q: "Сколько будет 5 + 7?", opts: ["11", "12", "13", "14"], correct: 1 }
-                ],
-                teens: [
-                    { q: "Какой химический элемент обозначается символом O?", opts: ["Золото", "Кислород", "Олово", "Осмий"], correct: 1 },
-                    { q: "В каком году началась Вторая мировая война?", opts: ["1937", "1939", "1941", "1945"], correct: 1 },
-                    { q: "Кто первым достиг берегов Америки?", opts: ["Васко да Гама", "Христофор Колумб", "Фернан Магеллан", "Джеймс Кук"], correct: 1 },
-                    { q: "Какая река — самая длинная в мире?", opts: ["Амазонка", "Нил", "Янцзы", "Миссисипи"], correct: 1 },
-                    { q: "Сколько континентов на Земле?", opts: ["5", "6", "7", "8"], correct: 2 },
-                    { q: "Какой газ составляет около 78% атмосферы?", opts: ["Кислород", "Углекислый газ", "Азот", "Аргон"], correct: 2 },
-                    { q: "Кто автор романа «Преступление и наказание»?", opts: ["Л.Н. Толстой", "А.П. Чехов", "Ф.М. Достоевский", "И.С. Тургенев"], correct: 2 },
-                    { q: "Сколько планет в Солнечной системе?", opts: ["7", "8", "9", "10"], correct: 1 },
-                    { q: "Какая кость в теле человека самая длинная?", opts: ["Большая берцовая", "Бедренная", "Плечевая", "Локтевая"], correct: 1 },
-                    { q: "В каком году распался СССР?", opts: ["1988", "1990", "1991", "1993"], correct: 2 }
-                ],
-                pros: [
-                    { q: "Какая страна имеет наибольшее количество часовых поясов?", opts: ["Россия", "США", "Франция", "Китай"], correct: 2 },
-                    { q: "Кто написал «Сто лет одиночества»?", opts: ["Хорхе Луис Борхес", "Габриэль Гарсиа Маркес", "Марио Варгас Льоса", "Пабло Неруда"], correct: 1 },
-                    { q: "Какой химический элемент имеет атомный номер 79?", opts: ["Платина", "Серебро", "Ртуть", "Золото"], correct: 3 },
-                    { q: "В каком году была основана ООН?", opts: ["1943", "1945", "1947", "1950"], correct: 1 },
-                    { q: "Какая гора — высочайшая в Солнечной системе?", opts: ["Эверест", "Олимп (Марс)", "Маат-Монс (Венера)", "Аскрийская гора"], correct: 1 },
-                    { q: "Кто был первым человеком в космосе?", opts: ["Нил Армстронг", "Юрий Гагарин", "Алексей Леонов", "Валентина Терешкова"], correct: 1 },
-                    { q: "Сколько клавиш у стандартного фортепиано?", opts: ["72", "80", "84", "88"], correct: 3 },
-                    { q: "Какое море не имеет берегов?", opts: "Саргассово", opts: ["Саргассово", "Мёртвое", "Карибское", "Баренцево"], correct: 0 },
-                    { q: "Кто изобрёл печатный станок в Европе?", opts: ["Бенджамин Франклин", "Иоганн Гутенберг", "Уильям Кэкстон", "Альд Мануций"], correct: 1 },
-                    { q: "Какой химический символ у ртути?", opts: ["R", "Hg", "Pb", "Ag"], correct: 1 }
-                ]
-            };
+<!-- Screen 2: Quiz -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-header">
+    <div class="question-num" id="qNum">Вопрос: 1/10</div>
+    <div class="timer-wrap">
+      <div class="timer-bar-bg"><div class="timer-bar-fill" id="timerBar"></div></div>
+      <div class="timer-text" id="timerText">20</div>
+    </div>
+  </div>
+  <div class="question-text" id="qText">Вопрос</div>
+  <div class="answers-grid" id="answersGrid"></div>
+</div>
 
-            // ---------- Состояние игры ----------
-            let currentCategory = null;
-            let currentQuestionIndex = 0;
-            let score = 0;
-            let timerInterval = null;
-            let timeLeft = 20; // секунд
-            let answered = false;
-            let started = false; // флаг для предотвращения двойного старта
+<!-- Screen 3: Finish -->
+<div class="screen" id="screen-finish">
+  <div class="finish-card">
+    <h1>Результаты 🎉</h1>
+    <div class="score-display" id="scoreDisplay">0 / 10</div>
+    <div class="grade-display" id="gradeDisplay">Оценка: 5</div>
+    <p class="comment" id="commentText"></p>
+    <button class="restart-btn" onclick="restart()">Играть снова</button>
+  </div>
+</div>
 
-            // DOM элементы
-            const screenWelcome = document.getElementById('screen-welcome');
-            const screenQuiz = document.getElementById('screen-quiz');
-            const screenResults = document.getElementById('screen-results');
-            const questionNumEl = document.getElementById('question-num');
-            const questionTextEl = document.getElementById('question-text');
-            const answerContainer = document.getElementById('answer-container');
-            const timerBar = document.getElementById('timer-bar');
-            const resultCircle = document.getElementById('result-circle');
-            const resultScore = document.getElementById('result-score');
-            const resultComment = document.getElementById('result-comment');
+<script>
+var questions = {
+  kids: [
+    {q:"Сколько лап у кошки?", a:["2","4","6","8"], c:1},
+    {q:"Какого цвета небо в ясный день?", a:["Зелёное","Синее","Красное","Чёрное"], c:1},
+    {q:"Сколько дней в неделе?", a:["5","6","7","8"], c:2},
+    {q:"Какое животное говорит «Му»?", a:["Собака","Корова","Лошадь","Курица"], c:1},
+    {q:"Какой праздник приносит Дед Мороз?", a:["Лето","Новый год","День рождения","8 Марта"], c:1},
+    {q:"Сколько цветов у радуги?", a:["5","6","7","8"], c:2},
+    {q:"Что делает пчела?", a:["Мёд","Молоко","Хлеб","Сметану"], c:0},
+    {q:"Какая цифра идёт после пяти?", a:["Четыре","Шесть","Семь","Восемь"], c:1},
+    {q:"Где живёт рыба?", a:["В лесу","В воде","В небе","В норе"], c:1},
+    {q:"Какой формы мяч?", a:["Квадратный","Круглый","Треугольный","Овальный"], c:1}
+  ],
+  teens: [
+    {q:"Столица Австралии?", a:["Сидней","Канберра","Мельбурн","Перт"], c:1},
+    {q:"Сколько материков на Земле?", a:["5","6","7","8"], c:1},
+    {q:"Кто написал «Войну и мир»?", a:["Достоевский","Толстой","Чехов","Пушкин"], c:1},
+    {q:"Что изучает астрономия?", a:["Растения","Звёзды","Насекомых","Камни"], c:1},
+    {q:"Сколько игроков в футбольной команде?", a:["9","10","11","12"], c:2},
+    {q:"Какой металл жидкий при комнатной температуре?", a:["Свинец","Ртуть","Олово","Цинк"], c:1},
+    {q:"Кто нарисовал «Мону Лизу»?", a:["Микеланджело","Рафаэль","Да Винчи","Ван Гог"], c:2},
+    {q:"Самая длинная река в мире?", a:["Волга","Амазонка","Нил","Ганг"], c:2},
+    {q:"В каком году распался СССР?", a:["1989","1990","1991","1992"], c:2},
+    {q:"Какая планета ближе всего к Солнцу?", a:["Венера","Меркурий","Земля","Марс"], c:1}
+  ],
+  pro: [
+    {q:"Кто сформулировал теорию относительности?", a:["Ньютон","Эйнштейн","Бор","Резерфорд"], c:1},
+    {q:"Какое самое глубокое озеро в мире?", a:["Каспийское","Байкал","Танганьика","Виктория"], c:1},
+    {q:"В каком году началась Столетняя война?", a:["1337","1415","1206","1453"], c:0},
+    {q:"Что такое HTML?", a:["Язык программирования","Язык разметки","База данных","Протокол"], c:1},
+    {q:"Кто написал «Преступление и наказание»?", a:["Толстой","Гоголь","Достоевский","Тургенев"], c:2},
+    {q:"Какое число называется числом Эйлера (e)?", a:["2{,}718","3{,}14","1{,}618","0{,}577"], c:0},
+    {q:"Какая страна родина футбола?", a:["Бразилия","Италия","Англия","Германия"], c:2},
+    {q:"Кто изобрёл телефон?", a:["Эдисон","Белл","Маркони","Тесла"], c:1},
+    {q:"Какой элемент имеет химический символ Au?", a:["Серебро","Золото","Алюминий","Медь"], c:1},
+    {q:"Какой самый маленький угол в равностороннем треугольнике?", a:["30°","45°","60°","90°"], c:2}
+  ]
+};
 
-            // ---------- Вспомогательные функции ----------
-            function setScreen(activeId) {
-                screenWelcome.classList.remove('active');
-                screenQuiz.classList.remove('active');
-                screenResults.classList.remove('active');
-                document.getElementById(activeId).classList.add('active');
-            }
+var currentCat = 'kids';
+var currentQ = 0;
+var score = 0;
+var timeLeft = 20;
+var timerId = null;
+var answered = false;
 
-            function resetGameState() {
-                currentCategory = null;
-                currentQuestionIndex = 0;
-                score = 0;
-                answered = false;
-                started = false;
-                if (timerInterval) clearInterval(timerInterval);
-                timerInterval = null;
-                timeLeft = 20;
-                timerBar.style.width = '100%';
-            }
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
 
-            // Таймер
-            function startTimer() {
-                if (timerInterval) clearInterval(timerInterval);
-                timeLeft = 20;
-                timerBar.style.width = '100%';
-                timerInterval = setInterval(() => {
-                    timeLeft -= 0.05;
-                    const percent = Math.max(0, (timeLeft / 20) * 100);
-                    timerBar.style.width = percent + '%';
-                    if (timeLeft <= 0.1) {
-                        clearInterval(timerInterval);
-                        handleTimeOut();
-                    }
-                }, 50);
-            }
+function startQuiz(cat) {
+  currentCat = cat;
+  currentQ = 0;
+  score = 0;
+  showScreen('screen-quiz');
+  loadQuestion();
+}
 
-            function stopTimer() {
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                }
-            }
+function loadQuestion() {
+  answered = false;
+  var pool = questions[currentCat];
+  var item = pool[currentQ];
 
-            function handleTimeOut() {
-                if (answered) return;
-                answered = true;
-                stopTimer();
-                timerBar.style.width = '0%';
-                // Не засчитываем балл
-                setTimeout(() => {
-                    nextQuestion();
-                }, 1200);
-            }
+  document.getElementById('qNum').textContent = 'Вопрос: ' + (currentQ + 1) + '/' + pool.length;
+  document.getElementById('qText').textContent = item.q;
 
-            function nextQuestion() {
-                currentQuestionIndex++;
-                if (currentQuestionIndex >= 10) {
-                    showResults();
-                    return;
-                }
-                answered = false;
-                loadQuestion();
-            }
+  var grid = document.getElementById('answersGrid');
+  grid.innerHTML = '';
+  for (var i = 0; i < 4; i++) {
+    var btn = document.createElement('button');
+    btn.className = 'ans-btn ans-' + i;
+    btn.textContent = item.a[i];
+    btn.setAttribute('onclick', 'answer(' + i + ')');
+    grid.appendChild(btn);
+  }
 
-            function loadQuestion() {
-                const qList = questionsDB[currentCategory];
-                if (!qList || currentQuestionIndex >= qList.length) {
-                    showResults();
-                    return;
-                }
-                const q = qList[currentQuestionIndex];
-                questionNumEl.textContent = `${currentQuestionIndex + 1}/10`;
-                questionTextEl.textContent = q.question;
-                answerContainer.innerHTML = '';
-                q.opts.forEach((opt, idx) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'answer-btn';
-                    btn.dataset.answer = idx;
-                    btn.textContent = opt;
-                    btn.onclick = function() {
-                        checkAnswer(idx, this);
-                    };
-                    answerContainer.appendChild(btn);
-                });
-                stopTimer();
-                timerBar.style.width = '100%';
-                timeLeft = 20;
-                startTimer();
-            }
+  timeLeft = 20;
+  document.getElementById('timerText').textContent = timeLeft;
+  var bar = document.getElementById('timerBar');
+  bar.style.width = '100%';
+  bar.style.background = '#56f0a1';
+  bar.style.transition = 'none';
+  bar.offsetHeight; // force reflow
+  bar.style.transition = 'width 1s linear';
 
-            function checkAnswer(index, button) {
-                if (answered) return;
-                answered = true;
-                stopTimer();
-                const qList = questionsDB[currentCategory];
-                const correctIdx = qList[currentQuestionIndex].correct;
+  if (timerId) clearInterval(timerId);
+  timerId = setInterval(tick, 1000);
+}
 
-                // Визуальная обратная связь
-                const allBtns = answerContainer.querySelectorAll('.answer-btn');
-                allBtns.forEach(b => b.disabled = true);
+function tick() {
+  timeLeft--;
+  document.getElementById('timerText').textContent = timeLeft;
+  var pct = (timeLeft / 20) * 100;
+  var bar = document.getElementById('timerBar');
+  bar.style.width = pct + '%';
+  if (timeLeft <= 5) bar.style.background = '#ff5a5f';
 
-                if (index === correctIdx) {
-                    score++;
-                    button.classList.add('correct');
-                } else {
-                    button.classList.add('wrong');
-                    // подсветить правильный
-                    allBtns[correctIdx].classList.add('correct');
-                }
+  if (timeLeft <= 0) {
+    clearInterval(timerId);
+    answer(-1);
+  }
+}
 
-                timerBar.style.width = '100%';
-                setTimeout(() => {
-                    nextQuestion();
-                }, 900);
-            }
+function answer(idx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerId);
 
-            function showResults() {
-                stopTimer();
-                setScreen('screen-results');
-                const total = 10;
-                let rating = 2;
-                let comment = '';
-                if (score <= 3) {
-                    rating = 2;
-                    comment = 'Не расстраивайся — попробуй ещё раз, всё получится!';
-                } else if (score <= 5) {
-                    rating = 3;
-                    comment = 'Неплохо, но есть куда расти. В следующий раз лучше!';
-                } else if (score <= 7) {
-                    rating = 4;
-                    comment = 'Отличная работа! Ты на верном пути.';
-                } else {
-                    rating = 5;
-                    comment = 'Превосходно! Ты — настоящий эрудит 🔥';
-                }
-                resultCircle.textContent = rating;
-                resultCircle.style.background = `conic-gradient(#88d8b0 ${(rating/5)*360}deg, #2a2a40 ${(rating/5)*360}deg)`;
-                resultScore.textContent = `${score} / ${total}`;
-                resultComment.textContent = comment;
-            }
+  var pool = questions[currentCat];
+  var item = pool[currentQ];
+  var buttons = document.querySelectorAll('.ans-btn');
 
-            // ---------- Публичные функции (вызываются из HTML) ----------
-            window.startQuiz = function(category) {
-                if (started) return; // защита от двойного клика
-                started = true;
-                resetGameState();
-                currentCategory = category;
-                currentQuestionIndex = 0;
-                score = 0;
-                answered = false;
-                setScreen('screen-quiz');
-                loadQuestion();
-            };
+  buttons.forEach(function(b){ b.classList.add('disabled'); });
 
-            window.checkAnswer = function(index, button) {
-                checkAnswer(index, button);
-            };
+  if (idx === item.c) {
+    score++;
+    buttons[idx].classList.add('correct');
+  } else {
+    if (idx >= 0) buttons[idx].classList.add('wrong');
+    if (item.c >= 0) buttons[item.c].classList.add('correct');
+  }
 
-            window.resetQuiz = function() {
-                resetGameState();
-                setScreen('screen-welcome');
-                started = false;
-            };
+  currentQ++;
+  if (currentQ >= pool.length) {
+    setTimeout(finishQuiz, 1500);
+  } else {
+    setTimeout(loadQuestion, 1500);
+  }
+}
 
-            // ---------- Дублирование логики через window.onload ----------
-            window.addEventListener('load', function() {
-                // Делегирование для кнопок старта
-                document.addEventListener('click', function(e) {
-                    const startBtn = e.target.closest('.btn.kids, .btn.teens, .btn.pros');
-                    if (startBtn && !started) {
-                        e.stopPropagation();
-                        const cat = startBtn.classList.contains('kids') ? 'kids' :
-                                    startBtn.classList.contains('teens') ? 'teens' : 'pros';
-                        window.startQuiz(cat);
-                    }
-                });
+function finishQuiz() {
+  showScreen('screen-finish');
+  var pool = questions[currentCat];
+  var total = pool.length;
+  document.getElementById('scoreDisplay').textContent = score + ' / ' + total;
 
-                // Делегирование для кнопок ответов (дублирование)
-                document.addEventListener('click', function(e) {
-                    const answerBtn = e.target.closest('.answer-btn');
-                    if (answerBtn && !answered) {
-                        e.stopPropagation();
-                        const index = parseInt(answerBtn.dataset.answer, 10);
-                        window.checkAnswer(index, answerBtn);
-                    }
-                });
-            });
-        })();
-    </script>
+  var grade, comment;
+  if (score === total) { grade = '5+'; comment = 'Идеально! Ты настоящий эрудит! 🌟'; }
+  else if (score >= 8) { grade = '5'; comment = 'Отличный результат! Почти безупречно!'; }
+  else if (score >= 6) { grade = '4'; comment = 'Хорошо! Знания на твёрдую четвёрку.'; }
+  else if (score >= 4) { grade = '3'; comment = 'Неплохо, но есть куда расти. Попробуй ещё!'; }
+  else { grade = '2'; comment = 'Не сдавайся! В следующий раз точно получится.'; }
+
+  document.getElementById('gradeDisplay').textContent = 'Оценка: ' + grade;
+  document.getElementById('commentText').textContent = comment;
+}
+
+function restart() {
+  if (timerId) clearInterval(timerId);
+  showScreen('screen-welcome');
+}
+
+window.onload = function() {
+  showScreen('screen-welcome');
+};
+</script>
 </body>
 </html>
