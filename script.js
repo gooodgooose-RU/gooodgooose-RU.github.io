@@ -8,6 +8,7 @@ const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 /* ===== Настройки ===== */
 const ADMIN_PASSWORD = 'NEON-ADMIN-777'; // пароль админ-панели (Ctrl+Shift+A)
 const START_BALANCE = 100;
+const FIRST_WIN_PRIZE = 1000; // гарантированный выигрыш с первой игры
 
 /* Секретные промокоды (видны только тебе — не свети их игрокам) */
 const PROMO_CODES = {
@@ -28,17 +29,19 @@ const CASES = [
   { name: 'Космо-Мега кейс',  price: 2500, emoji: '🌌', color: '#39ff8e' },
 ];
 
+/* Шансы занижены: крупные суммы выпадают очень редко */
 const DROPS = [
-  { value: 500, weight: 32 }, { value: 700, weight: 26 },
-  { value: 1000, weight: 20 }, { value: 5000, weight: 12 },
-  { value: 10000, weight: 5 }, { value: 20000, weight: 3 },
-  { value: 40000, weight: 1.4 }, { value: 50000, weight: 0.6 },
+  { value: 500,   weight: 12 },  { value: 700,   weight: 10 },
+  { value: 1000,  weight: 8 },   { value: 5000,  weight: 2 },
+  { value: 10000, weight: 0.5 }, { value: 20000, weight: 0.15 },
+  { value: 40000, weight: 0.03 }, { value: 50000, weight: 0.01 },
 ];
 
+/* 9 символов на барабан — три в ряд выпадают редко */
 const SLOTS = [
-  { title: '🍓 Клубнички', symbols: ['🍓','🍋','🍇','🍒','🔔','⭐'], lucky: '🍓' },
-  { title: '🎰 777',       symbols: ['7️⃣','💎','🍀','🔔','⭐','👑'], lucky: '7️⃣' },
-  { title: '🏴‍☠️ Пираты',  symbols: ['🏴‍☠️','⚓','💰','🦜','🗡️','💎'], lucky: '🏴‍☠️' },
+  { title: '🍓 Клубнички', symbols: ['🍓','🍋','🍇','🍒','🔔','⭐','🌵','🍄','🍕'], lucky: '🍓' },
+  { title: '🎰 777',       symbols: ['7️⃣','💎','🍀','🔔','⭐','👑','🎯','⚡','🌶️'], lucky: '7️⃣' },
+  { title: '🏴‍☠️ Пираты',  symbols: ['🏴‍☠️','⚓','💰','🦜','🗡️','💎','🧭','🍺','🦀'], lucky: '🏴‍☠️' },
 ];
 
 /* ===== База данных ===== */
@@ -47,7 +50,7 @@ const DB = {
     const { data: exists } = await supa.from('players').select('id').eq('login', login);
     if (exists && exists.length) return { ok: false, error: 'Такой логин уже занят' };
     const { error } = await supa.from('players').insert({
-      login, password, balance: START_BALANCE, used_promos: [],
+      login, password, balance: START_BALANCE, used_promos: [], first_win_done: false,
     });
     return error ? { ok: false, error: 'Ошибка регистрации' } : { ok: true };
   },
@@ -60,11 +63,13 @@ const DB = {
   async get(login) {
     const { data } = await supa.from('players').select('*').eq('login', login);
     return data && data[0]
-      ? { balance: data[0].balance, usedPromos: data[0].used_promos || [] } : null;
+      ? { balance: data[0].balance, usedPromos: data[0].used_promos || [],
+          firstWinDone: !!data[0].first_win_done } : null;
   },
   async save(login, data) {
     await supa.from('players')
-      .update({ balance: Math.floor(data.balance), used_promos: data.usedPromos })
+      .update({ balance: Math.floor(data.balance), used_promos: data.usedPromos,
+                first_win_done: !!data.firstWinDone })
       .eq('login', login);
   },
   /* Функции для админ-панели */
@@ -140,7 +145,8 @@ $('authForm').addEventListener('submit', async (e) => {
   if (!result.ok) return err.textContent = result.error;
 
   const user = authMode === 'login' ? result.user : await DB.get(login);
-  currentUser = { login, balance: user.balance, usedPromos: user.usedPromos || [] };
+  currentUser = { login, balance: user.balance, usedPromos: user.usedPromos || [],
+                  firstWinDone: !!user.firstWinDone };
   err.textContent = '';
   enterApp();
 });
@@ -149,7 +155,8 @@ async function enterApp() {
   $('authScreen').classList.add('hidden');
   $('app').classList.remove('hidden');
   const saved = await DB.get(currentUser.login);
-  if (saved) { currentUser.balance = saved.balance; currentUser.usedPromos = saved.usedPromos || []; }
+  if (saved) { currentUser.balance = saved.balance; currentUser.usedPromos = saved.usedPromos || [];
+               currentUser.firstWinDone = saved.firstWinDone; }
   updateBalance();
   renderCases();
   renderSlots();
@@ -206,7 +213,14 @@ function openCase(c) {
   if (currentUser.balance < c.price) return showToast('Недостаточно средств на балансе');
 
   changeBalance(-c.price);
-  const prize = randomDrop();
+  let prize = randomDrop();
+
+  /* Первое открытие кейса в жизни игрока — гарантированный выигрыш */
+  if (!currentUser.firstWinDone) {
+    prize = FIRST_WIN_PRIZE;
+    currentUser.firstWinDone = true;
+    DB.save(currentUser.login, currentUser);
+  }
 
   const reel = $('caseReel');
   const items = [];
@@ -273,6 +287,14 @@ function renderSlots() {
 
       const result = Array.from({ length: 3 }, () =>
         slot.symbols[Math.floor(Math.random() * slot.symbols.length)]);
+
+      /* Первый спин в жизни игрока — гарантированная победа */
+      if (!currentUser.firstWinDone) {
+        const sym = slot.symbols[0];
+        result[0] = sym; result[1] = sym; result[2] = sym;
+        currentUser.firstWinDone = true;
+        DB.save(currentUser.login, currentUser);
+      }
 
       reels.forEach((r, i) => {
         r.classList.add('spin');
@@ -402,4 +424,3 @@ document.addEventListener('click', function startAudio() {
   if (!muted) bgm.play().catch(() => {});
   document.removeEventListener('click', startAudio);
 });
-
