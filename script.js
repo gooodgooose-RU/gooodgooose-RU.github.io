@@ -181,7 +181,25 @@ const AudioSys = {
   },
 };
 
-function playWin() { AudioSys.playWin(); }
+function playWin() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    [523, 659, 784, 1047, 1319].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, now + i * 0.09);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + i * 0.09 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.09 + 0.5);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + i * 0.09);
+      osc.stop(now + i * 0.09 + 0.55);
+    });
+  } catch (e) { /* без звука, но без падений */ }
+}
+
 
 /* ===== Дисклеймер ===== */
 $('disclaimerAccept').addEventListener('click', () => {
@@ -484,8 +502,22 @@ async function renderAdmin() {
 $('adminClose').addEventListener('click', () => $('adminModal').classList.add('hidden'));
 
 /* ===== Управление звуком ===== */
-/* ===== Звук ===== */
 let muted = localStorage.getItem('neonCasinoMuted') === '1';
-const bgm = $('bgm');
-function applyMute() { bgm.muted = muted; $('muteBtn').textContent = muted ? '🔇' : '🔊'; }
+
+function applyMute() { $('muteBtn').textContent = muted ? '🔇' : '🔊'; }
 applyMute();
+
+$('muteBtn').addEventListener('click', () => {
+  muted = !muted;
+  localStorage.setItem('neonCasinoMuted', muted ? '1' : '0');
+  applyMute();
+  if (muted) AudioSys.stopMusic();
+  else { AudioSys.startMusic(); showToast('Музыка включена'); }
+});
+
+/* Автозапуск музыки после первого клика (требование браузеров) */
+document.addEventListener('click', function startAudio() {
+  if (!muted) AudioSys.startMusic();
+  document.removeEventListener('click', startAudio);
+});
+
