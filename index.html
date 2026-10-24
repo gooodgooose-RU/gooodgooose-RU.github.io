@@ -16,13 +16,13 @@
 
   <!-- Предупреждение при входе -->
   <div class="modal-overlay" id="disclaimerModal">
-    <div class="modal-box">
+    <div class="modal-box glass">
       <div class="modal-icon">⚠️</div>
       <h2>Внимание!</h2>
       <p>Это <b>исключительно симулятор</b>. Вы играете на <b>виртуальные очки</b>,
       которые не имеют реальной ценности. Реальные деньги не используются.</p>
       <p>Игра запрещена лицам <b>младше 18 лет</b>. Играйте ответственно.</p>
-      <button class="btn btn-primary btn-wide" id="disclaimerAccept">Мне 18+, согласен</button>
+      <button class="btn btn-primary btn-wide" id="disclaimerAccept">✓ Мне 18+, согласен</button>
     </div>
   </div>
 
@@ -55,14 +55,14 @@
         <span class="currency">₽</span>
       </div>
       <div class="topbar-controls">
-        <button class="btn btn-icon" id="muteBtn" title="Звук">🔊</button>
-        <button class="btn btn-icon" id="logoutBtn" title="Выйти">🚪</button>
+        <button class="btn btn-icon" id="muteBtn" title="Звук вкл/выкл">🔊</button>
+        <button class="btn btn-icon btn-danger-ghost" id="logoutBtn" title="Выйти">🚪</button>
       </div>
     </header>
 
     <section class="promo-section">
       <input type="text" id="promoInput" placeholder="Промокод">
-      <button class="btn btn-primary" id="promoBtn">Активировать</button>
+      <button class="btn btn-gold" id="promoBtn">🎟 Активировать</button>
       <p class="promo-msg" id="promoMsg"></p>
     </section>
 
@@ -89,7 +89,7 @@
         <h2 id="caseModalTitle">Открытие кейса</h2>
         <div class="case-reel-window"><div class="case-reel" id="caseReel"></div></div>
         <p class="case-result-text" id="caseResultText"></p>
-        <button class="btn btn-primary btn-wide" id="caseModalClose">Забрать</button>
+        <button class="btn btn-primary btn-wide" id="caseModalClose">💰 Забрать</button>
       </div>
     </div>
 
@@ -102,10 +102,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Звуки -->
-  <audio id="bgm" loop src="music.wav"></audio>
-  <audio id="winSound" src="win.wav"></audio>
 
   <script src="script.js"></script>
 </body>
