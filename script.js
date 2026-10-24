@@ -97,8 +97,6 @@ function showToast(text) {
   t._timer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-function playWin() { $('winSound').currentTime = 0; $('winSound').play().catch(() => {}); }
-
 function updateBalance(bump = false) {
   const el = $('balanceValue');
   el.textContent = Math.floor(currentUser.balance).toLocaleString('ru-RU');
@@ -110,6 +108,80 @@ async function changeBalance(delta) {
   updateBalance(true);
   await DB.save(currentUser.login, currentUser);
 }
+
+/* ==========================================================
+   ЗВУК — генерируется кодом, файлы не нужны
+========================================================== */
+const AudioSys = {
+  ctx: null,
+  get context() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return this.ctx;
+  },
+
+  /* Короткий победный «дзынь» */
+  playWin() {
+    try {
+      const ctx = this.context;
+      const now = ctx.currentTime;
+      [523, 659, 784, 1047, 1319].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, now + i * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.25, now + i * 0.09 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.09 + 0.5);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + i * 0.09);
+        osc.stop(now + i * 0.09 + 0.55);
+      });
+    } catch (e) { /* звук не критичен */ }
+  },
+
+  /* Спокойный фоновый луп: мягкие аккорды Am–F–C–G */
+  startMusic() {
+    if (this._music) return;
+    try {
+      const ctx = this.context;
+      const master = ctx.createGain();
+      master.gain.value = 0.08;
+      master.connect(ctx.destination);
+      this._music = master;
+
+      const chords = [
+        [220.0, 261.6, 329.6], // Am
+        [174.6, 220.0, 261.6], // F
+        [130.8, 164.8, 196.0], // C
+        [196.0, 246.9, 293.7], // G
+      ];
+      let t = ctx.currentTime + 0.1;
+      for (let loop = 0; loop < 200; loop++) {
+        chords.forEach((chord) => {
+          chord.forEach((freq) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.linearRampToValueAtTime(0.3, t + 1.2);
+            gain.gain.linearRampToValueAtTime(0.0001, t + 3.6);
+            osc.connect(gain).connect(master);
+            osc.start(t);
+            osc.stop(t + 3.7);
+          });
+          t += 3.6;
+        });
+      }
+    } catch (e) { /* звук не критичен */ }
+  },
+
+  stopMusic() {
+    if (this._music) { this._music.gain.value = 0; this._music = null; }
+  },
+};
+
+function playWin() { AudioSys.playWin(); }
 
 /* ===== Дисклеймер ===== */
 $('disclaimerAccept').addEventListener('click', () => {
@@ -179,6 +251,7 @@ $('promoBtn').addEventListener('click', async () => {
 
   currentUser.usedPromos.push(code);
   await changeBalance(PROMO_CODES[code]);
+  playWin(); // приятный звук даже на пополнение
   msg.textContent = `✅ Код активирован: +${PROMO_CODES[code]} ₽`;
   msg.className = 'promo-msg ok';
   input.value = '';
@@ -203,7 +276,7 @@ function renderCases() {
       <div class="case-emoji">${c.emoji}</div>
       <div class="case-name" style="color:${c.color}">${c.name}</div>
       <div class="case-price">${c.price} ₽</div>
-      <button class="btn btn-primary">Открыть за ${c.price} ₽</button>`;
+      <button class="btn btn-primary">🔓 Открыть</button>`;
     card.querySelector('button').addEventListener('click', () => openCase(c));
     grid.appendChild(card);
   });
@@ -266,7 +339,7 @@ function renderSlots() {
       <div class="slot-reels"><div class="reel">❔</div><div class="reel">❔</div><div class="reel">❔</div></div>
       <div class="slot-controls">
         <input type="number" min="1" placeholder="Ставка, ₽" value="10">
-        <button class="btn btn-primary">Крутить</button>
+        <button class="btn btn-primary">🎲 Крутить</button>
       </div>
       <p class="slot-msg">Три в ряд — х3 · два в ряд — х1.5 · счастливый символ — возврат ставки</p>`;
 
@@ -284,6 +357,7 @@ function renderSlots() {
       msg.className = 'slot-msg';
       msg.textContent = 'Крутим...';
       btn.disabled = true;
+      reels.forEach(r => r.classList.remove('big-win'));
 
       const result = Array.from({ length: 3 }, () =>
         slot.symbols[Math.floor(Math.random() * slot.symbols.length)]);
@@ -321,6 +395,7 @@ function renderSlots() {
           const win = Math.floor(bet * mult);
           changeBalance(win);
           playWin();
+          if (mult >= 3) reels.forEach(r => r.classList.add('big-win'));
           msg.textContent = `🎉 Победа! +${win} ₽ (х${mult})`;
           msg.className = 'slot-msg win';
         } else if (mult === 1) {
@@ -408,19 +483,22 @@ async function renderAdmin() {
 
 $('adminClose').addEventListener('click', () => $('adminModal').classList.add('hidden'));
 
-/* ===== Звук ===== */
+/* ===== Управление звуком ===== */
 let muted = localStorage.getItem('neonCasinoMuted') === '1';
-const bgm = $('bgm');
-function applyMute() { bgm.muted = muted; $('muteBtn').textContent = muted ? '🔇' : '🔊'; }
+
+function applyMute() { $('muteBtn').textContent = muted ? '🔇' : '🔊'; }
 applyMute();
 
 $('muteBtn').addEventListener('click', () => {
   muted = !muted;
   localStorage.setItem('neonCasinoMuted', muted ? '1' : '0');
   applyMute();
-  if (!muted) bgm.play().catch(() => showToast('Файл music.wav не найден'));
+  if (muted) AudioSys.stopMusic();
+  else { AudioSys.startMusic(); showToast('Музыка включена'); }
 });
+
+/* Автозапуск музыки после первого клика (требование браузеров) */
 document.addEventListener('click', function startAudio() {
-  if (!muted) bgm.play().catch(() => {});
+  if (!muted) AudioSys.startMusic();
   document.removeEventListener('click', startAudio);
 });
