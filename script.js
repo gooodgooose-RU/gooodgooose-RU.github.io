@@ -1,26 +1,37 @@
 'use strict';
 
-/* ===== Подключение к базе данных (Supabase) ===== */
+/* ===== Подключение к базе данных ===== */
 const SUPABASE_URL = 'https://cupmxpxojzfjvrrcewxt.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_naIbP5aOspgpJTmHnIQb8Q_U2JnNjeA';
 const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ===== Настройки игры ===== */
+/* ===== Настройки ===== */
+const ADMIN_PASSWORD = 'NEON-ADMIN-777'; // пароль админ-панели (Ctrl+Shift+A)
 const START_BALANCE = 100;
-const PROMO_CODES = { CODE100: 100, CODE500: 500, CODE1000: 1000, CODE5000: 5000 };
+
+/* Секретные промокоды (видны только тебе — не свети их игрокам) */
+const PROMO_CODES = {
+  'f8k2qxp91m': 100,
+  'tv7rd3nqz5': 500,
+  'p2m8w4kh6z': 1000,
+  'q9x4v7bn2r': 5000,
+};
 
 const CASES = [
-  { name: 'Бронзовый кейс',   price: 15,  emoji: '🥉', color: '#cd7f32' },
-  { name: 'Серебряный кейс',  price: 50,  emoji: '🥈', color: '#c0c0c0' },
-  { name: 'Золотой кейс',     price: 70,  emoji: '🏆', color: '#ffd54a' },
-  { name: 'Кристалл кейс',    price: 100, emoji: '💎', color: '#00e5ff' },
-  { name: 'Королевский кейс', price: 300, emoji: '👑', color: '#ff2ec4' },
+  { name: 'Бронзовый кейс',   price: 15,   emoji: '🥉', color: '#cd7f32' },
+  { name: 'Серебряный кейс',  price: 50,   emoji: '🥈', color: '#c0c0c0' },
+  { name: 'Золотой кейс',     price: 70,   emoji: '🏆', color: '#ffd54a' },
+  { name: 'Кристалл кейс',    price: 100,  emoji: '💎', color: '#00e5ff' },
+  { name: 'Королевский кейс', price: 300,  emoji: '👑', color: '#ff2ec4' },
+  { name: 'Огненный кейс',    price: 500,  emoji: '🔥', color: '#ff7a2e' },
+  { name: 'Космический кейс', price: 1000, emoji: '🚀', color: '#7b2eff' },
+  { name: 'Космо-Мега кейс',  price: 2500, emoji: '🌌', color: '#39ff8e' },
 ];
 
 const DROPS = [
-  { value: 500,   weight: 32 }, { value: 700, weight: 26 },
-  { value: 1000,  weight: 20 }, { value: 5000, weight: 12 },
-  { value: 10000, weight: 5 },  { value: 20000, weight: 3 },
+  { value: 500, weight: 32 }, { value: 700, weight: 26 },
+  { value: 1000, weight: 20 }, { value: 5000, weight: 12 },
+  { value: 10000, weight: 5 }, { value: 20000, weight: 3 },
   { value: 40000, weight: 1.4 }, { value: 50000, weight: 0.6 },
 ];
 
@@ -30,25 +41,19 @@ const SLOTS = [
   { title: '🏴‍☠️ Пираты',  symbols: ['🏴‍☠️','⚓','💰','🦜','🗡️','💎'], lucky: '🏴‍☠️' },
 ];
 
-/* ===== Работа с базой данных ===== */
-function hash(p) { // для учебного симулятора; для реального проекта нужна полноценная защита
-  let h = 0;
-  for (let i = 0; i < p.length; i++) { h = (h << 5) - h + p.charCodeAt(i); h |= 0; }
-  return String(h);
-}
-
+/* ===== База данных ===== */
 const DB = {
   async register(login, password) {
     const { data: exists } = await supa.from('players').select('id').eq('login', login);
     if (exists && exists.length) return { ok: false, error: 'Такой логин уже занят' };
     const { error } = await supa.from('players').insert({
-      login, password: hash(password), balance: START_BALANCE, used_promos: [],
+      login, password, balance: START_BALANCE, used_promos: [],
     });
     return error ? { ok: false, error: 'Ошибка регистрации' } : { ok: true };
   },
   async login(login, password) {
     const { data, error } = await supa.from('players')
-      .select('*').eq('login', login).eq('password', hash(password));
+      .select('*').eq('login', login).eq('password', password);
     if (error || !data || !data.length) return { ok: false, error: 'Неверный логин или пароль' };
     return { ok: true, user: data[0] };
   },
@@ -61,6 +66,17 @@ const DB = {
     await supa.from('players')
       .update({ balance: Math.floor(data.balance), used_promos: data.usedPromos })
       .eq('login', login);
+  },
+  /* Функции для админ-панели */
+  async list() {
+    const { data } = await supa.from('players').select('*').order('login');
+    return data || [];
+  },
+  async setBalance(login, balance) {
+    await supa.from('players').update({ balance: Math.floor(balance) }).eq('login', login);
+  },
+  async remove(login) {
+    await supa.from('players').delete().eq('login', login);
   },
 };
 
@@ -76,6 +92,8 @@ function showToast(text) {
   t._timer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+function playWin() { $('winSound').currentTime = 0; $('winSound').play().catch(() => {}); }
+
 function updateBalance(bump = false) {
   const el = $('balanceValue');
   el.textContent = Math.floor(currentUser.balance).toLocaleString('ru-RU');
@@ -85,7 +103,7 @@ function updateBalance(bump = false) {
 async function changeBalance(delta) {
   currentUser.balance = Math.max(0, currentUser.balance + delta);
   updateBalance(true);
-  await DB.save(currentUser.login, currentUser); // сохраняем в облако
+  await DB.save(currentUser.login, currentUser);
 }
 
 /* ===== Дисклеймер ===== */
@@ -147,7 +165,7 @@ $('logoutBtn').addEventListener('click', () => {
 $('promoBtn').addEventListener('click', async () => {
   const input = $('promoInput');
   const msg = $('promoMsg');
-  const code = input.value.trim().toUpperCase();
+  const code = input.value.trim().toLowerCase();
 
   if (!PROMO_CODES[code]) { msg.textContent = '❌ Неверный промокод'; msg.className = 'promo-msg bad'; return; }
   if (currentUser.usedPromos.includes(code)) { msg.textContent = '⚠️ Этот код уже использован'; msg.className = 'promo-msg bad'; return; }
@@ -214,6 +232,7 @@ function openCase(c) {
 
   setTimeout(() => {
     changeBalance(prize);
+    playWin();
     $('caseResultText').textContent = `🎉 Выигрыш: ${prize.toLocaleString('ru-RU')} ₽!`;
     $('caseModalClose').disabled = false;
   }, 4100);
@@ -279,6 +298,7 @@ function renderSlots() {
         if (mult > 1) {
           const win = Math.floor(bet * mult);
           changeBalance(win);
+          playWin();
           msg.textContent = `🎉 Победа! +${win} ₽ (х${mult})`;
           msg.className = 'slot-msg win';
         } else if (mult === 1) {
@@ -305,6 +325,67 @@ document.querySelectorAll('.nav-tab').forEach((tab) => {
   });
 });
 
+/* ===== АДМИН-ПАНЕЛЬ (Ctrl+Shift+A) ===== */
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'Ф')) {
+    e.preventDefault();
+    if (!$('adminModal').classList.contains('hidden')) return;
+    const pass = prompt('Пароль администратора:');
+    if (pass === ADMIN_PASSWORD) {
+      $('adminModal').classList.remove('hidden');
+      renderAdmin();
+    } else if (pass !== null) {
+      showToast('Неверный пароль админа');
+    }
+  }
+});
+
+async function renderAdmin() {
+  const list = $('adminList');
+  list.innerHTML = 'Загрузка...';
+  const players = await DB.list();
+  if (!players.length) { list.innerHTML = '<p style="color:var(--text-dim)">Игроков пока нет</p>'; return; }
+  list.innerHTML = '';
+  players.forEach((p) => {
+    const row = document.createElement('div');
+    row.className = 'admin-row';
+    row.innerHTML = `
+      <span class="adm-login" title="${p.login}">${p.login}</span>
+      <span class="adm-pass" title="${p.password}">${p.password}</span>
+      <span class="adm-bal">${Math.floor(p.balance).toLocaleString('ru-RU')} ₽</span>
+      <span class="admin-actions">
+        <button class="btn btn-gold" title="Изменить баланс">✏️</button>
+        <button class="btn btn-primary" title="Выдать 10000">+10к</button>
+        <button class="btn btn-danger" title="Удалить игрока">🗑</button>
+      </span>`;
+    row.querySelector('.btn-gold').addEventListener('click', async () => {
+      const val = prompt(`Баланс игрока ${p.login} (сейчас ${p.balance}). Введи новое значение:`);
+      if (val === null) return;
+      const num = Number(val);
+      if (isNaN(num) || num < 0) return showToast('Введите число от 0 и больше');
+      await DB.setBalance(p.login, num);
+      if (currentUser && currentUser.login === p.login) currentUser.balance = num;
+      renderAdmin();
+      showToast(`Баланс ${p.login} изменён`);
+    });
+    row.querySelector('.btn-primary').addEventListener('click', async () => {
+      await DB.setBalance(p.login, Number(p.balance) + 10000);
+      if (currentUser && currentUser.login === p.login) currentUser.balance += 10000;
+      renderAdmin();
+      showToast(`${p.login}: +10000 ₽`);
+    });
+    row.querySelector('.btn-danger').addEventListener('click', async () => {
+      if (!confirm(`Удалить игрока ${p.login}?`)) return;
+      await DB.remove(p.login);
+      renderAdmin();
+      showToast(`Игрок ${p.login} удалён`);
+    });
+    list.appendChild(row);
+  });
+}
+
+$('adminClose').addEventListener('click', () => $('adminModal').classList.add('hidden'));
+
 /* ===== Звук ===== */
 let muted = localStorage.getItem('neonCasinoMuted') === '1';
 const bgm = $('bgm');
@@ -315,9 +396,10 @@ $('muteBtn').addEventListener('click', () => {
   muted = !muted;
   localStorage.setItem('neonCasinoMuted', muted ? '1' : '0');
   applyMute();
-  if (!muted) bgm.play().catch(() => showToast('Файл music.mp3 не найден'));
+  if (!muted) bgm.play().catch(() => showToast('Файл music.wav не найден'));
 });
 document.addEventListener('click', function startAudio() {
   if (!muted) bgm.play().catch(() => {});
   document.removeEventListener('click', startAudio);
 });
+
