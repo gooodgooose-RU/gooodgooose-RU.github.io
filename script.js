@@ -484,21 +484,8 @@ async function renderAdmin() {
 $('adminClose').addEventListener('click', () => $('adminModal').classList.add('hidden'));
 
 /* ===== Управление звуком ===== */
+/* ===== Звук ===== */
 let muted = localStorage.getItem('neonCasinoMuted') === '1';
-
-function applyMute() { $('muteBtn').textContent = muted ? '🔇' : '🔊'; }
+const bgm = $('bgm');
+function applyMute() { bgm.muted = muted; $('muteBtn').textContent = muted ? '🔇' : '🔊'; }
 applyMute();
-
-$('muteBtn').addEventListener('click', () => {
-  muted = !muted;
-  localStorage.setItem('neonCasinoMuted', muted ? '1' : '0');
-  applyMute();
-  if (muted) AudioSys.stopMusic();
-  else { AudioSys.startMusic(); showToast('Музыка включена'); }
-});
-
-/* Автозапуск музыки после первого клика (требование браузеров) */
-document.addEventListener('click', function startAudio() {
-  if (!muted) AudioSys.startMusic();
-  document.removeEventListener('click', startAudio);
-});
