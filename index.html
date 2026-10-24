@@ -1,292 +1,96 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Викторина — Kahoot Style</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,Arial,sans-serif}
-  body{background:#26223e;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .screen{display:none;width:100%;max-width:900px;padding:20px}
-  .screen.active{display:block}
-
-  /* Welcome */
-  .welcome-card{text-align:center}
-  .welcome-card h1{font-size:2.8rem;margin-bottom:10px;color:#fff;letter-spacing:1px}
-  .welcome-card p{font-size:1.1rem;color:#ccc;margin-bottom:40px}
-  .cat-grid{display:flex;flex-direction:column;gap:20px;max-width:480px;margin:0 auto}
-  .cat-btn{padding:22px;border:none;border-radius:16px;font-size:1.4rem;font-weight:700;color:#fff;cursor:pointer;transition:transform .15s,filter .15s}
-  .cat-btn:hover{transform:translateY(-4px);filter:brightness(1.15)}
-  .cat-btn:active{transform:translateY(2px)}
-  .cat-kids{background:linear-gradient(135deg,#ff5a5f,#e63946)}
-  .cat-teens{background:linear-gradient(135deg,#33c4ff,#1a73e8)}
-  .cat-pro{background:linear-gradient(135deg,#56f0a1,#22a06b)}
-
-  /* Quiz */
-  .quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
-  .question-num{font-size:1.3rem;font-weight:700}
-  .timer-wrap{display:flex;align-items:center;gap:10px}
-  .timer-bar-bg{width:120px;height:14px;background:#3d3658;border-radius:7px;overflow:hidden}
-  .timer-bar-fill{height:100%;border-radius:7px;background:#56f0a1;transition:width 1s linear;width:100%}
-  .timer-text{font-size:1.2rem;font-weight:700;min-width:36px;text-align:right}
-  .question-text{font-size:2rem;font-weight:700;text-align:center;margin:48px 0}
-  .answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .ans-btn{padding:28px 20px;border:none;border-radius:16px;font-size:1.25rem;font-weight:700;color:#fff;cursor:pointer;transition:transform .12s,filter .15s;text-align:left}
-  .ans-btn:hover{transform:translateY(-4px);filter:brightness(1.12)}
-  .ans-btn:active{transform:translateY(2px)}
-  .ans-btn.disabled{pointer-events:none}
-  .ans-btn.correct{outline:4px solid #fff}
-  .ans-btn.wrong{outline:4px solid #333;opacity:.6}
-  .ans-0{background:linear-gradient(135deg,#ff5a5f,#e63946)}
-  .ans-1{background:linear-gradient(135deg,#33c4ff,#1a73e8)}
-  .ans-2{background:linear-gradient(135deg,#ffba3d,#f59000)}
-  .ans-3{background:linear-gradient(135deg,#56f0a1,#22a06b)}
-
-  /* Finish */
-  .finish-card{text-align:center}
-  .finish-card h1{font-size:2.4rem;margin-bottom:16px}
-  .score-display{font-size:3.5rem;font-weight:800;margin:20px 0;color:#56f0a1}
-  .grade-display{font-size:2rem;font-weight:700;margin-bottom:12px;color:#ffba3d}
-  .comment{font-size:1.15rem;color:#ccc;margin-bottom:40px;max-width:500px;margin-left:auto;margin-right:auto}
-  .restart-btn{padding:18px 48px;border:none;border-radius:14px;font-size:1.3rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#a259ff,#7b2fe6);cursor:pointer;transition:transform .15s,filter .15s}
-  .restart-btn:hover{transform:translateY(-4px);filter:brightness(1.15)}
-  .restart-btn:active{transform:translateY(2px)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Casino — Симулятор</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-<!-- Background music -->
-<audio id="kahoot-music" loop src="https://archive.org/download/kahoot-lobby-music_202104/Kahoot%20Lobby%20Music.mp3"></audio>
-
-<!-- Screen 1: Welcome -->
-<div class="screen active" id="screen-welcome">
-  <div class="welcome-card">
-    <h1>🎯 Викторина</h1>
-    <p>Выберите свою категорию и проверьте эрудицию!</p>
-    <div class="cat-grid">
-      <button class="cat-btn cat-kids" onclick="startQuiz('kids')">Дети (7–10 лет)</button>
-      <button class="cat-btn cat-teens" onclick="startQuiz('teens')">Подростки (11–15 лет)</button>
-      <button class="cat-btn cat-pro" onclick="startQuiz('pro')">Профи (16+ лет)</button>
+  <!-- Предупреждение при входе -->
+  <div class="modal-overlay" id="disclaimerModal">
+    <div class="modal-box">
+      <div class="modal-icon">⚠️</div>
+      <h2>Внимание!</h2>
+      <p>Это <b>исключительно симулятор</b>. Вы играете на <b>виртуальные очки</b>,
+      которые не имеют реальной ценности. Реальные деньги не используются.</p>
+      <p>Игра запрещена лицам <b>младше 18 лет</b>. Играйте ответственно.</p>
+      <button class="btn btn-primary" id="disclaimerAccept">Мне 18+, согласен</button>
     </div>
   </div>
-</div>
 
-<!-- Screen 2: Quiz -->
-<div class="screen" id="screen-quiz">
-  <div class="quiz-header">
-    <div class="question-num" id="qNum">Вопрос: 1/5</div>
-    <div class="timer-wrap">
-      <div class="timer-bar-bg"><div class="timer-bar-fill" id="timerBar"></div></div>
-      <div class="timer-text" id="timerText">20</div>
+  <!-- Экран входа -->
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-card">
+      <h1 class="logo">NEON <span>CASINO</span></h1>
+      <p class="auth-subtitle">Симулятор на виртуальные очки · 18+</p>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Вход</button>
+        <button class="auth-tab" data-tab="register">Регистрация</button>
+      </div>
+      <form id="authForm" autocomplete="off">
+        <input type="text" id="authLogin" placeholder="Логин" required minlength="3" maxlength="20">
+        <input type="password" id="authPassword" placeholder="Пароль" required minlength="4">
+        <p class="auth-error" id="authError"></p>
+        <button type="submit" class="btn btn-primary btn-wide" id="authSubmit">Войти</button>
+      </form>
+      <p class="auth-note">Баланс сохраняется в облаке и не пропадает.</p>
     </div>
   </div>
-  <div class="question-text" id="qText">Вопрос</div>
-  <div class="answers-grid" id="answersGrid"></div>
-</div>
 
-<!-- Screen 3: Finish -->
-<div class="screen" id="screen-finish">
-  <div class="finish-card">
-    <h1>Результаты 🎉</h1>
-    <div class="score-display" id="scoreDisplay">0 / 5</div>
-    <div class="grade-display" id="gradeDisplay">Оценка: 5</div>
-    <p class="comment" id="commentText"></p>
-    <button class="restart-btn" onclick="restart()">Играть снова</button>
+  <!-- Основной экран -->
+  <div class="app hidden" id="app">
+    <header class="topbar">
+      <div class="logo logo-small">NEON <span>CASINO</span></div>
+      <div class="balance-box">
+        <span class="balance-label">Баланс:</span>
+        <span class="balance-value" id="balanceValue">0</span>
+        <span class="currency">₽</span>
+      </div>
+      <div class="topbar-controls">
+        <button class="btn btn-icon" id="muteBtn" title="Звук">🔊</button>
+        <button class="btn btn-icon" id="logoutBtn" title="Выйти">🚪</button>
+      </div>
+    </header>
+
+    <section class="promo-section">
+      <input type="text" id="promoInput" placeholder="Введите промокод (например, CODE100)">
+      <button class="btn btn-primary" id="promoBtn">Активировать</button>
+      <p class="promo-msg" id="promoMsg"></p>
+    </section>
+
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-section="cases">🎁 Кейсы</button>
+      <button class="nav-tab" data-section="slots">🎰 Слоты</button>
+    </nav>
+
+    <section class="section" id="casesSection">
+      <h2 class="section-title">Магазин кейсов</h2>
+      <div class="cases-grid" id="casesGrid"></div>
+    </section>
+
+    <section class="section hidden" id="slotsSection">
+      <h2 class="section-title">Игровые автоматы</h2>
+      <div class="slots-grid" id="slotsGrid"></div>
+    </section>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="modal-overlay hidden" id="caseModal">
+      <div class="modal-box">
+        <h2 id="caseModalTitle">Открытие кейса</h2>
+        <div class="case-reel-window"><div class="case-reel" id="caseReel"></div></div>
+        <p class="case-result-text" id="caseResultText"></p>
+        <button class="btn btn-primary" id="caseModalClose">Забрать</button>
+      </div>
+    </div>
   </div>
-</div>
 
-<script>
-var questions = {
-  kids: [
-    {q:"Сколько лап у кошки?", a:["2","4","6","8"], c:1},
-    {q:"Какого цвета небо в ясный день?", a:["Зелёное","Синее","Красное","Чёрное"], c:1},
-    {q:"Сколько дней в неделе?", a:["5","6","7","8"], c:2},
-    {q:"Какое животное говорит «Му»?", a:["Собака","Корова","Лошадь","Курица"], c:1},
-    {q:"Какой праздник приносит Дед Мороз?", a:["Лето","Новый год","День рождения","8 Марта"], c:1},
-    {q:"Сколько цветов у радуги?", a:["5","6","7","8"], c:2},
-    {q:"Что делает пчела?", a:["Мёд","Молоко","Хлеб","Сметану"], c:0},
-    {q:"Какая цифра идёт после пяти?", a:["Четыре","Шесть","Семь","Восемь"], c:1},
-    {q:"Где живёт рыба?", a:["В лесу","В воде","В небе","В норе"], c:1},
-    {q:"Какой формы мяч?", a:["Квадратный","Круглый","Треугольный","Овальный"], c:1},
-    {q:"Сколько месяцев в году?", a:["10","11","12","13"], c:2},
-    {q:"Какой зверь самый большой?", a:["Слон","Мышь","Заяц","Лиса"], c:0},
-    {q:"Что растёт на яблоне?", a:["Груши","Яблоки","Картошка","Огурцы"], c:1},
-    {q:"Какого цвета снег?", a:["Зелёный","Белый","Синий","Красный"], c:1},
-    {q:"Кто говорит «Гав»?", a:["Кошка","Собака","Утка","Петух"], c:1}
-  ],
-  teens: [
-    {q:"Столица Австралии?", a:["Сидней","Канберра","Мельбурн","Перт"], c:1},
-    {q:"Сколько материков на Земле?", a:["5","6","7","8"], c:1},
-    {q:"Кто написал «Войну и мир»?", a:["Достоевский","Толстой","Чехов","Пушкин"], c:1},
-    {q:"Что изучает астрономия?", a:["Растения","Звёзды","Насекомых","Камни"], c:1},
-    {q:"Сколько игроков в футбольной команде?", a:["9","10","11","12"], c:2},
-    {q:"Какой металл жидкий при комнатной температуре?", a:["Свинец","Ртуть","Олово","Цинк"], c:1},
-    {q:"Кто нарисовал «Мону Лизу»?", a:["Микеланджело","Рафаэль","Да Винчи","Ван Гог"], c:2},
-    {q:"Самая длинная река в мире?", a:["Волга","Амазонка","Нил","Ганг"], c:2},
-    {q:"В каком году распался СССР?", a:["1989","1990","1991","1992"], c:2},
-    {q:"Какая планета ближе всего к Солнцу?", a:["Венера","Меркурий","Земля","Марс"], c:1},
-    {q:"Столица Канады?", a:["Торонто","Оттава","Ванкувер","Монреаль"], c:1},
-    {q:"Кто открыл Америку для европейцев?", a:["Магеллан","Колумб","Кук","Васко да Гама"], c:1},
-    {q:"Сколько струн у классической гитары?", a:["4","5","6","7"], c:2},
-    {q:"Какой газ нужен для дыхания?", a:["Азот","Кислород","Водород","Гелий"], c:1},
-    {q:"Автор романа «Мастер и Маргарита»?", a:["Булгаков","Чехов","Гоголь","Бунин"], c:0}
-  ],
-  pro: [
-    {q:"Кто сформулировал теорию относительности?", a:["Ньютон","Эйнштейн","Бор","Резерфорд"], c:1},
-    {q:"Какое самое глубокое озеро в мире?", a:["Каспийское","Байкал","Танганьика","Виктория"], c:1},
-    {q:"В каком году началась Столетняя война?", a:["1337","1415","1206","1453"], c:0},
-    {q:"Что такое HTML?", a:["Язык программирования","Язык разметки","База данных","Протокол"], c:1},
-    {q:"Кто написал «Преступление и наказание»?", a:["Толстой","Гоголь","Достоевский","Тургенев"], c:2},
-    {q:"Какая страна родина футбола?", a:["Бразилия","Италия","Англия","Германия"], c:2},
-    {q:"Кто изобрёл телефон?", a:["Эдисон","Белл","Маркони","Тесла"], c:1},
-    {q:"Какой элемент имеет химический символ Au?", a:["Серебро","Золото","Алюминий","Медь"], c:1},
-    {q:"Какой самый маленький угол в равностороннем треугольнике?", a:["30°","45°","60°","90°"], c:2},
-    {q:"Кто написал симфонию №9?", a:["Моцарт","Бетховен","Бах","Чайковский"], c:1},
-    {q:"Столица Бразилии?", a:["Рио-де-Жанейро","Бразилиа","Сан-Паулу","Сальвадор"], c:1},
-    {q:"Что измеряет шкала Рихтера?", a:["Температуру","Землетрясения","Ветер","Давление"], c:1},
-    {q:"Кто создал теорию эволюции?", a:["Мендель","Дарвин","Линней","Ламарк"], c:1},
-    {q:"Сколько костей у взрослого человека?", a:["186","206","226","246"], c:1},
-    {q:"В каком году высадка на Луну?", a:["1965","1969","1971","1975"], c:1}
-  ]
-};
+  <!-- Музыка: положи рядом файл music.mp3 (бесплатно: pixabay.com/music) -->
+  <audio id="bgm" loop src="music.mp3"></audio>
 
-var QUESTIONS_PER_GAME = 5;
-var currentCat = 'kids';
-var currentQ = 0;
-var score = 0;
-var timeLeft = 20;
-var timerId = null;
-var answered = false;
-var gameQuestions = [];
-var bgMusic = document.getElementById('kahoot-music');
-
-function shuffle(arr) {
-  var copy = arr.slice();
-  for (var i = copy.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var tmp = copy[i];
-    copy[i] = copy[j];
-    copy[j] = tmp;
-  }
-  return copy;
-}
-
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
-  document.getElementById(id).classList.add('active');
-}
-
-function startQuiz(cat) {
-  currentCat = cat;
-  currentQ = 0;
-  score = 0;
-  // Случайно выбираем 5 вопросов из пула категории
-  gameQuestions = shuffle(questions[cat]).slice(0, QUESTIONS_PER_GAME);
-  showScreen('screen-quiz');
-  // Запускаем фоновую музыку по клику пользователя
-  bgMusic.play().catch(function(e){ console.log('Music autoplay blocked'); });
-  loadQuestion();
-}
-
-function loadQuestion() {
-  answered = false;
-  var item = gameQuestions[currentQ];
-  var total = gameQuestions.length;
-
-  document.getElementById('qNum').textContent = 'Вопрос: ' + (currentQ + 1) + '/' + total;
-  document.getElementById('qText').textContent = item.q;
-
-  var grid = document.getElementById('answersGrid');
-  grid.innerHTML = '';
-  for (var i = 0; i < 4; i++) {
-    var btn = document.createElement('button');
-    btn.className = 'ans-btn ans-' + i;
-    btn.textContent = item.a[i];
-    btn.setAttribute('onclick', 'answer(' + i + ')');
-    grid.appendChild(btn);
-  }
-
-  timeLeft = 20;
-  document.getElementById('timerText').textContent = timeLeft;
-  var bar = document.getElementById('timerBar');
-  bar.style.width = '100%';
-  bar.style.background = '#56f0a1';
-  bar.style.transition = 'none';
-  bar.offsetHeight;
-  bar.style.transition = 'width 1s linear';
-
-  if (timerId) clearInterval(timerId);
-  timerId = setInterval(tick, 1000);
-}
-
-function tick() {
-  timeLeft--;
-  document.getElementById('timerText').textContent = timeLeft;
-  var pct = (timeLeft / 20) * 100;
-  var bar = document.getElementById('timerBar');
-  bar.style.width = pct + '%';
-  if (timeLeft <= 5) bar.style.background = '#ff5a5f';
-
-  if (timeLeft <= 0) {
-    clearInterval(timerId);
-    answer(-1);
-  }
-}
-
-function answer(idx) {
-  if (answered) return;
-  answered = true;
-  clearInterval(timerId);
-
-  var item = gameQuestions[currentQ];
-  var buttons = document.querySelectorAll('.ans-btn');
-
-  buttons.forEach(function(b){ b.classList.add('disabled'); });
-
-  if (idx === item.c) {
-    score++;
-    buttons[idx].classList.add('correct');
-  } else {
-    if (idx >= 0) buttons[idx].classList.add('wrong');
-    if (item.c >= 0) buttons[item.c].classList.add('correct');
-  }
-
-  currentQ++;
-  if (currentQ >= gameQuestions.length) {
-    setTimeout(finishQuiz, 1500);
-  } else {
-    setTimeout(loadQuestion, 1500);
-  }
-}
-
-function finishQuiz() {
-  showScreen('screen-finish');
-  // Останавливаем музыку на финальном экране
-  bgMusic.pause();
-
-  var total = gameQuestions.length;
-  document.getElementById('scoreDisplay').textContent = score + ' / ' + total;
-
-  var grade, comment;
-  if (score === total) { grade = '5+'; comment = 'Идеально! Ты настоящий эрудит! 🌟'; }
-  else if (score >= 4) { grade = '5'; comment = 'Отличный результат! Почти безупречно!'; }
-  else if (score >= 3) { grade = '4'; comment = 'Хорошо! Знания на твёрдую четвёрку.'; }
-  else if (score >= 2) { grade = '3'; comment = 'Неплохо, но есть куда расти. Попробуй ещё!'; }
-  else { grade = '2'; comment = 'Не сдавайся! В следующий раз точно получится.'; }
-
-  document.getElementById('gradeDisplay').textContent = 'Оценка: ' + grade;
-  document.getElementById('commentText').textContent = comment;
-}
-
-function restart() {
-  if (timerId) clearInterval(timerId);
-  showScreen('screen-welcome');
-}
-
-window.onload = function() {
-  showScreen('screen-welcome');
-};
-</script>
-
+  <script src="script.js"></script>
 </body>
 </html>
